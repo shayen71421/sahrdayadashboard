@@ -1,0 +1,9 @@
+{
+  "configs": [
+    {
+      "name": "firebase",
+      "type": "firebase",
+      "config": {}
+    }
+  ]
+}
