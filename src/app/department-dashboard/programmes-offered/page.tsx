@@ -4,10 +4,11 @@ import { useEffect, useState } from "react";
 import {
   addProgram,
   getProgrammesOffered,
+  addProgramCard,
   getProgramDetails,
   updateProgramMainText,
- deleteProgram,
- deleteProgramCard,
+  deleteProgram,
+  deleteProgramCard,
   updateProgramCard,
 } from "../../../utils/department_dashboard_function";
 
@@ -30,12 +31,15 @@ export default function ProgrammesOfferedPage() {
   const [editingCardIndex, setEditingCardIndex] = useState<number | null>(null);
   const [editingCardTitle, setEditingCardTitle] = useState("");
   const [editingCardText, setEditingCardText] = useState("");
-
+  const [showAddCardInputForProgramId, setShowAddCardInputForProgramId] =
+    useState<string | null>(null);
+  const [newCardTitle, setNewCardTitle] = useState("");
+  const [newCardText, setNewCardText] = useState("");
 
   useEffect(() => {
     async function fetchProgrammes() {
       try {
-        const programmesData = await getProgrammesOffered("cse"); // departmentId hardcoded for now
+        const programmesData = await getProgrammesOffered("cse");
         setProgrammes(programmesData);
       } catch (err) {
         setError(err as Error);
@@ -61,7 +65,7 @@ export default function ProgrammesOfferedPage() {
   const handleAddProgram = async () => {
     if (!newProgramId.trim()) return;
     try {
-      await addProgram("cse", newProgramId); // 🔑 Pass deptId + programId
+      await addProgram("cse", newProgramId);
       setNewProgramId("");
       setShowAddProgramInput(false);
       const programmesData = await getProgrammesOffered("cse");
@@ -77,19 +81,11 @@ export default function ProgrammesOfferedPage() {
       await updateProgramMainText("cse", editingProgramId, editingMainText);
       setEditingProgramId(null);
       setEditingMainText("");
-      // Refresh the programme list to reflect the changes
       const programmesData = await getProgrammesOffered("cse");
       setProgrammes(programmesData);
     } catch (err) {
       setError(err as Error);
     }
-  };
-
-  const handleEditCard = (programId: string, cardIndex: number, currentTitle: string, currentText: string) => {
-    setEditingCardIndex(cardIndex);
-    setEditingCardTitle(currentTitle);
-    setEditingCardText(currentText);
-    setEditingMainText(""); // Clear main text editing state
   };
 
   const handleSaveCard = async () => {
@@ -106,9 +102,26 @@ export default function ProgrammesOfferedPage() {
       setEditingCardIndex(null);
       setEditingCardTitle("");
       setEditingCardText("");
-      // Refresh the programme list to reflect the changes
       const programmesData = await getProgrammesOffered("cse");
       setProgrammes(programmesData);
+    } catch (err) {
+      setError(err as Error);
+    }
+  };
+
+  const handleAddCard = async (programId: string) => {
+    if (!newCardTitle.trim() || !newCardText.trim()) return;
+    try {
+      await addProgramCard("cse", programId, newCardTitle, newCardText);
+      const programDetails = await getProgramDetails("cse", programId);
+      setSelectedProgram(programDetails);
+      const programmesData = await getProgrammesOffered("cse");
+      setProgrammes(programmesData);
+
+      // reset form
+      setShowAddCardInputForProgramId(null);
+      setNewCardTitle("");
+      setNewCardText("");
     } catch (err) {
       setError(err as Error);
     }
@@ -119,14 +132,14 @@ export default function ProgrammesOfferedPage() {
       await deleteProgram("cse", programId);
       const programmesData = await getProgrammesOffered("cse");
       setProgrammes(programmesData);
-      setSelectedProgram(null); // Deselect the program if it was deleted
+      setSelectedProgram(null);
     }
   };
 
   const handleDeleteCard = async (programId: string, cardIndex: number) => {
     if (window.confirm("Are you sure you want to delete this card?")) {
       await deleteProgramCard("cse", programId, cardIndex);
-      await handleProgramSelect(programId); // Re-fetch the selected program details
+      await handleProgramSelect(programId);
     }
   };
 
@@ -146,20 +159,23 @@ export default function ProgrammesOfferedPage() {
         </h2>
         <ul className="space-y-2">
           {programmes.map((program) => (
-<li key={program.id} className="flex justify-between items-center px-4 py-2 bg-gray-100 rounded hover:bg-gray-200 transition">
- <span
- onClick={() => handleProgramSelect(program.id)}
- className="cursor-pointer flex-grow"
- >
- {program.id}
- </span>
- <button
- onClick={() => handleDeleteProgram(program.id)}
- className="ml-4 px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 text-sm"
- >
- Delete
- </button>
-</li>
+            <li
+              key={program.id}
+              className="flex justify-between items-center px-4 py-2 bg-gray-100 rounded hover:bg-gray-200 transition"
+            >
+              <span
+                onClick={() => handleProgramSelect(program.id)}
+                className="cursor-pointer flex-grow"
+              >
+                {program.id}
+              </span>
+              <button
+                onClick={() => handleDeleteProgram(program.id)}
+                className="ml-4 px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 text-sm"
+              >
+                Delete
+              </button>
+            </li>
           ))}
         </ul>
 
@@ -205,7 +221,8 @@ export default function ProgrammesOfferedPage() {
             <h3 className="text-lg font-medium text-blue-700 mb-2">
               Main Text:
             </h3>
-            {editingProgramId === selectedProgram.id && editingCardIndex === null ? (
+            {editingProgramId === selectedProgram.id &&
+            editingCardIndex === null ? (
               <div className="flex flex-col space-y-2">
                 <textarea
                   value={editingMainText}
@@ -230,10 +247,11 @@ export default function ProgrammesOfferedPage() {
                     setEditingMainText(selectedProgram.mainText || "");
                   }}
                   className="ml-4 px-3 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600 text-sm"
-                >Edit</button>
+                >
+                  Edit
+                </button>
               </div>
             )}
-
           </div>
 
           {/* Cards */}
@@ -245,63 +263,103 @@ export default function ProgrammesOfferedPage() {
                   key={index}
                   className="border p-3 rounded mb-2 bg-gray-50"
                 >
-                  {" "}
                   {editingProgramId === selectedProgram.id &&
                   editingCardIndex === index ? (
-
-
-                  <div className="flex flex-col space-y-2">
-                    <input
-                      type="text"
-                      value={editingCardTitle}
-                      onChange={(e) => setEditingCardTitle(e.target.value)}
-                      className="border rounded px-3 py-1 font-semibold"
-                    />
-                    <textarea
-                      value={editingCardText}
-                      onChange={(e) => setEditingCardText(e.target.value)}
-                      className="border rounded px-3 py-2 h-20"
-                    />
-                    <button
-                      onClick={handleSaveCard}
-                      className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 self-start"
-                    >
-                      Save
-                    </button>
-                  </div>
-                ) : (
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <h4 className="font-semibold">{title}</h4>
-                      <p>{selectedProgram.cardText?.[index]}</p>
+                    <div className="flex flex-col space-y-2">
+                      <input
+                        type="text"
+                        value={editingCardTitle}
+                        onChange={(e) => setEditingCardTitle(e.target.value)}
+                        className="border rounded px-3 py-1 font-semibold"
+                      />
+                      <textarea
+                        value={editingCardText}
+                        onChange={(e) => setEditingCardText(e.target.value)}
+                        className="border rounded px-3 py-2 h-20"
+                      />
+                      <button
+                        onClick={handleSaveCard}
+                        className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 self-start"
+                      >
+                        Save
+                      </button>
                     </div>
-                    <button
-                      onClick={() => {
-                        setEditingProgramId(selectedProgram.id);
-                        setEditingCardIndex(index);
-                        setEditingCardTitle(title);
-                        setEditingCardText(
-                          selectedProgram.cardText?.[index] || ""
-                        );
-                      }}
-
-
-                      className="ml-4 px-3 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600 text-sm"
-                    >Edit</button>
-                  </div>
-)}
-
-                  <button
- onClick={() => handleDeleteCard(selectedProgram.id, index)}
- className="ml-4 px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 text-sm"
- >
- Delete
- </button></div>
+                  ) : (
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <h4 className="font-semibold">{title}</h4>
+                        <p>{selectedProgram.cardText?.[index]}</p>
+                      </div>
+                      <button
+                        onClick={() => {
+                          setEditingProgramId(selectedProgram.id);
+                          setEditingCardIndex(index);
+                          setEditingCardTitle(title);
+                          setEditingCardText(
+                            selectedProgram.cardText?.[index] || ""
+                          );
+                        }}
+                        className="ml-4 px-3 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600 text-sm"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() =>
+                          handleDeleteCard(selectedProgram.id, index)
+                        }
+                        className="ml-2 px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 text-sm"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  )}
+                </div>
               ))
             ) : (
               <p>No cards available</p>
             )}
           </div>
+
+          {/* Add new card button */}
+          <button
+            onClick={() =>
+              setShowAddCardInputForProgramId(
+                showAddCardInputForProgramId === selectedProgram.id
+                  ? null
+                  : selectedProgram.id
+              )
+            }
+            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+          >
+            {showAddCardInputForProgramId === selectedProgram.id
+              ? "Cancel"
+              : "Add Card"}
+          </button>
+
+          {/* Add new card form */}
+          {showAddCardInputForProgramId === selectedProgram.id && (
+            <div className="mt-3 flex flex-col space-y-2">
+              <input
+                type="text"
+                placeholder="New Card Title"
+                value={newCardTitle}
+                onChange={(e) => setNewCardTitle(e.target.value)}
+                className="border rounded px-3 py-1"
+              />
+              <textarea
+                placeholder="New Card Text"
+                value={newCardText}
+                onChange={(e) => setNewCardText(e.target.value)}
+                className="border rounded px-3 py-2 h-20"
+              />
+              <button
+                onClick={() => handleAddCard(selectedProgram.id)}
+                className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 self-start"
+              >
+                Create Card
+              </button>
+            </div>
+          )}
         </div>
       )}
     </div>

@@ -183,15 +183,28 @@ export const updateProgramCard = async (departmentId, programId, cardIndex, newT
 // Function to add a new cardTitle and cardText pair to a program
 export const addProgramCard = async (departmentId, programId, cardTitle, cardText) => {
   try {
-    const docRef = doc(db, 'department', departmentId, 'programmesOffered', programId);
-    await updateDoc(docRef, {
-      cardTitle: arrayUnion(cardTitle),
-      cardText: arrayUnion(cardText)
-    });
-    console.log("Program card added successfully!");
+ const docRef = doc(db, 'department', departmentId, 'programmesOffered', programId);
+ const docSnap = await getDoc(docRef);
+
+ if (docSnap.exists()) {
+ const data = docSnap.data();
+ const currentCardTitles = data.cardTitle || [];
+ const currentCardTexts = data.cardText || [];
+
+ currentCardTitles.push(cardTitle);
+ currentCardTexts.push(cardText);
+
+ await updateDoc(docRef, {
+ cardTitle: currentCardTitles,
+ cardText: currentCardTexts
+ });
+ console.log("Program card added successfully!");
+ } else {
+ console.log("Program document not found!");
+ }
   } catch (error) {
     console.error("Error adding program card: ", error);
-    throw error;
+ throw error;
   }
 };
 
