@@ -5,6 +5,10 @@ import {
   addProgram,
   getProgrammesOffered,
   getProgramDetails,
+  updateProgramMainText,
+ deleteProgram,
+ deleteProgramCard,
+  updateProgramCard,
 } from "../../../utils/department_dashboard_function";
 
 interface Programme {
@@ -21,6 +25,12 @@ export default function ProgrammesOfferedPage() {
   const [error, setError] = useState<Error | null>(null);
   const [newProgramId, setNewProgramId] = useState("");
   const [showAddProgramInput, setShowAddProgramInput] = useState(false);
+  const [editingProgramId, setEditingProgramId] = useState<string | null>(null);
+  const [editingMainText, setEditingMainText] = useState("");
+  const [editingCardIndex, setEditingCardIndex] = useState<number | null>(null);
+  const [editingCardTitle, setEditingCardTitle] = useState("");
+  const [editingCardText, setEditingCardText] = useState("");
+
 
   useEffect(() => {
     async function fetchProgrammes() {
@@ -61,6 +71,65 @@ export default function ProgrammesOfferedPage() {
     }
   };
 
+  const handleSaveMainText = async () => {
+    if (!editingProgramId) return;
+    try {
+      await updateProgramMainText("cse", editingProgramId, editingMainText);
+      setEditingProgramId(null);
+      setEditingMainText("");
+      // Refresh the programme list to reflect the changes
+      const programmesData = await getProgrammesOffered("cse");
+      setProgrammes(programmesData);
+    } catch (err) {
+      setError(err as Error);
+    }
+  };
+
+  const handleEditCard = (programId: string, cardIndex: number, currentTitle: string, currentText: string) => {
+    setEditingCardIndex(cardIndex);
+    setEditingCardTitle(currentTitle);
+    setEditingCardText(currentText);
+    setEditingMainText(""); // Clear main text editing state
+  };
+
+  const handleSaveCard = async () => {
+    if (!editingProgramId || editingCardIndex === null) return;
+    try {
+      await updateProgramCard(
+        "cse",
+        editingProgramId,
+        editingCardIndex,
+        editingCardTitle,
+        editingCardText
+      );
+      setEditingProgramId(null);
+      setEditingCardIndex(null);
+      setEditingCardTitle("");
+      setEditingCardText("");
+      // Refresh the programme list to reflect the changes
+      const programmesData = await getProgrammesOffered("cse");
+      setProgrammes(programmesData);
+    } catch (err) {
+      setError(err as Error);
+    }
+  };
+
+  const handleDeleteProgram = async (programId: string) => {
+    if (window.confirm(`Are you sure you want to delete program ${programId}?`)) {
+      await deleteProgram("cse", programId);
+      const programmesData = await getProgrammesOffered("cse");
+      setProgrammes(programmesData);
+      setSelectedProgram(null); // Deselect the program if it was deleted
+    }
+  };
+
+  const handleDeleteCard = async (programId: string, cardIndex: number) => {
+    if (window.confirm("Are you sure you want to delete this card?")) {
+      await deleteProgramCard("cse", programId, cardIndex);
+      await handleProgramSelect(programId); // Re-fetch the selected program details
+    }
+  };
+
   if (loading) return <div className="text-gray-700">Loading...</div>;
   if (error) return <div className="text-red-600">Error: {error.message}</div>;
 
@@ -77,13 +146,20 @@ export default function ProgrammesOfferedPage() {
         </h2>
         <ul className="space-y-2">
           {programmes.map((program) => (
-            <li
-              key={program.id}
-              onClick={() => handleProgramSelect(program.id)}
-              className="cursor-pointer px-4 py-2 bg-gray-100 rounded hover:bg-gray-200 transition"
-            >
-              {program.id}
-            </li>
+<li key={program.id} className="flex justify-between items-center px-4 py-2 bg-gray-100 rounded hover:bg-gray-200 transition">
+ <span
+ onClick={() => handleProgramSelect(program.id)}
+ className="cursor-pointer flex-grow"
+ >
+ {program.id}
+ </span>
+ <button
+ onClick={() => handleDeleteProgram(program.id)}
+ className="ml-4 px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 text-sm"
+ >
+ Delete
+ </button>
+</li>
           ))}
         </ul>
 
@@ -129,9 +205,35 @@ export default function ProgrammesOfferedPage() {
             <h3 className="text-lg font-medium text-blue-700 mb-2">
               Main Text:
             </h3>
-            <p className="bg-gray-50 p-3 rounded">
-              {selectedProgram.mainText || "No main text available"}
-            </p>
+            {editingProgramId === selectedProgram.id && editingCardIndex === null ? (
+              <div className="flex flex-col space-y-2">
+                <textarea
+                  value={editingMainText}
+                  onChange={(e) => setEditingMainText(e.target.value)}
+                  className="border rounded px-3 py-2 h-32"
+                />
+                <button
+                  onClick={handleSaveMainText}
+                  className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 self-start"
+                >
+                  Save
+                </button>
+              </div>
+            ) : (
+              <div className="flex justify-between items-center bg-gray-50 p-3 rounded">
+                <p className="flex-grow">
+                  {selectedProgram.mainText || "No main text available"}
+                </p>
+                <button
+                  onClick={() => {
+                    setEditingProgramId(selectedProgram.id);
+                    setEditingMainText(selectedProgram.mainText || "");
+                  }}
+                  className="ml-4 px-3 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600 text-sm"
+                >Edit</button>
+              </div>
+            )}
+
           </div>
 
           {/* Cards */}
@@ -143,9 +245,58 @@ export default function ProgrammesOfferedPage() {
                   key={index}
                   className="border p-3 rounded mb-2 bg-gray-50"
                 >
-                  <h4 className="font-semibold">{title}</h4>
-                  <p>{selectedProgram.cardText?.[index]}</p>
-                </div>
+                  {" "}
+                  {editingProgramId === selectedProgram.id &&
+                  editingCardIndex === index ? (
+
+
+                  <div className="flex flex-col space-y-2">
+                    <input
+                      type="text"
+                      value={editingCardTitle}
+                      onChange={(e) => setEditingCardTitle(e.target.value)}
+                      className="border rounded px-3 py-1 font-semibold"
+                    />
+                    <textarea
+                      value={editingCardText}
+                      onChange={(e) => setEditingCardText(e.target.value)}
+                      className="border rounded px-3 py-2 h-20"
+                    />
+                    <button
+                      onClick={handleSaveCard}
+                      className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 self-start"
+                    >
+                      Save
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <h4 className="font-semibold">{title}</h4>
+                      <p>{selectedProgram.cardText?.[index]}</p>
+                    </div>
+                    <button
+                      onClick={() => {
+                        setEditingProgramId(selectedProgram.id);
+                        setEditingCardIndex(index);
+                        setEditingCardTitle(title);
+                        setEditingCardText(
+                          selectedProgram.cardText?.[index] || ""
+                        );
+                      }}
+
+
+                      className="ml-4 px-3 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600 text-sm"
+                    >Edit</button>
+                  </div>
+)}
+
+                  <button
+ onClick={() => handleDeleteCard(selectedProgram.id, index)}
+ className="ml-4 px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 text-sm"
+ >
+ Delete
+ </button></div>
               ))
             ) : (
               <p>No cards available</p>

@@ -148,6 +148,38 @@ export const updateProgramMainText = async (departmentId, programId, newText) =>
   }
 };
 
+// Function to update a specific card (title and text) of a program
+export const updateProgramCard = async (departmentId, programId, cardIndex, newTitle, newText) => {
+  try {
+    const docRef = doc(db, 'department', departmentId, 'programmesOffered', programId);
+    const docSnap = await getDoc(docRef);
+
+    if (docSnap.exists()) {
+      const data = docSnap.data();
+      const currentCardTitles = data.cardTitle || [];
+      const currentCardTexts = data.cardText || [];
+
+      if (cardIndex >= 0 && cardIndex < currentCardTitles.length && cardIndex < currentCardTexts.length) {
+        currentCardTitles[cardIndex] = newTitle;
+        currentCardTexts[cardIndex] = newText;
+
+        await updateDoc(docRef, {
+          cardTitle: currentCardTitles,
+          cardText: currentCardTexts
+        });
+        console.log("Program card updated successfully!");
+      } else {
+        console.log("Invalid card index.");
+      }
+    } else {
+      console.log("Program document not found!");
+    }
+  } catch (error) {
+    console.error("Error updating program card: ", error);
+    throw error;
+  }
+};
+
 // Function to add a new cardTitle and cardText pair to a program
 export const addProgramCard = async (departmentId, programId, cardTitle, cardText) => {
   try {
@@ -167,22 +199,37 @@ export const addProgramCard = async (departmentId, programId, cardTitle, cardTex
 // This is a bit tricky with arrayRemove as it removes all instances matching the value.
 // A more robust solution might involve restructuring your data or fetching, modifying, and updating the whole array.
 // For simplicity with arrayRemove, we assume unique card titles/texts or accept removing all matches.
-export const deleteProgramCard = async (departmentId, programId, cardTitleToRemove, cardTextToRemove) => {
+export const deleteProgramCard = async (departmentId, programId, cardIndex) => {
   try {
     const docRef = doc(db, 'department', departmentId, 'programmesOffered', programId);
-    await updateDoc(docRef, {
-      cardTitle: arrayRemove(cardTitleToRemove),
-      cardText: arrayRemove(cardTextToRemove)
-    });
-    console.log("Program card deleted successfully!");
+    const docSnap = await getDoc(docRef);
+
+    if (docSnap.exists()) {
+      const data = docSnap.data();
+      const currentCardTitles = data.cardTitle || [];
+      const currentCardTexts = data.cardText || [];
+
+      if (cardIndex >= 0 && cardIndex < currentCardTitles.length && cardIndex < currentCardTexts.length) {
+        currentCardTitles.splice(cardIndex, 1);
+        currentCardTexts.splice(cardIndex, 1);
+
+        await updateDoc(docRef, {
+          cardTitle: currentCardTitles,
+          cardText: currentCardTexts
+        });
+        console.log("Program card deleted successfully!");
+      } else {
+        console.log("Invalid card index.");
+      }
+    } else {
+      console.log("Program document not found!");
+    }
   } catch (error) {
     console.error("Error deleting program card: ", error);
     throw error;
   }
 };
-
 // Function to delete a program document
-
 
 export const deleteProgram = async (departmentId, programId) => {
   try {
