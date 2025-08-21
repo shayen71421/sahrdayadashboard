@@ -22,6 +22,10 @@ const DepartmentDashboardLayout = ({
                 PEO, PSO, PO
               </Link>
             </li>
+             <li>
+               <a href="/department-dashboard/programmes-offered">Programmes Offered</a>
+              </li>
+
             {/* Future nav links */}
             <li>
               <Link
