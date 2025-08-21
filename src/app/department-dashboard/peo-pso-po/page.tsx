@@ -4,9 +4,8 @@ import { useEffect, useState } from "react";
 import {
   getPoPsoPeo,
   removePoPsoPeoItem,
-  updatePoPsoPeoItem, // 🔑 add this
+  updatePoPsoPeoItem,
 } from "../../../utils/department_dashboard_function";
-import { DocumentData } from "firebase/firestore";
 
 interface PoPsoPeoData {
   po: string[];
@@ -41,7 +40,6 @@ export default function PeoPsoPeoPage() {
     fetchData();
   }, []);
 
-  // 🔹 Save edited item
   const handleSaveClick = async (
     section: string,
     index: number,
@@ -51,8 +49,6 @@ export default function PeoPsoPeoPage() {
 
     try {
       const oldItem = data[section as keyof PoPsoPeoData][index];
-
-      // Assuming deptId="cse", programId="btech"
       await updatePoPsoPeoItem("cse", "btech", section, oldItem, newValue);
 
       const updatedData = { ...data };
@@ -64,7 +60,6 @@ export default function PeoPsoPeoPage() {
     }
   };
 
-  // 🔹 Delete item
   const handleDeleteClick = async (
     section: string,
     index: number,
@@ -85,41 +80,30 @@ export default function PeoPsoPeoPage() {
     }
   };
 
-  if (loading) return <div style={{ color: "black" }}>Loading...</div>;
-  if (error) return <div style={{ color: "red" }}>Error: {error.message}</div>;
+  if (loading)
+    return <div className="text-gray-700 text-lg">Loading...</div>;
+  if (error)
+    return <div className="text-red-600 text-lg">Error: {error.message}</div>;
 
   return (
-    <div
-      style={{
-        backgroundColor: "white",
-        color: "black",
-        minHeight: "100vh",
-        padding: "1rem",
-      }}
-    >
-      <h1 style={{ color: "darkblue", fontSize: "2rem", marginBottom: "1rem" }}>
-        PEO, PSO, PO
-      </h1>
+    <div className="bg-white text-gray-800 min-h-screen p-6 rounded-md shadow">
+      <h1 className="text-3xl font-bold text-blue-900 mb-6">PEO, PSO, PO</h1>
 
       {data &&
         (["peo", "pso", "po"] as const).map((section) => (
-          <div key={section} style={{ marginBottom: "1rem" }}>
-            <h2
-              style={{
-                color: "darkblue",
-                fontSize: "1.5rem",
-                fontWeight: "bold",
-                marginBottom: "0.5rem",
-              }}
-            >
+          <div key={section} className="mb-8">
+            <h2 className="text-xl font-semibold text-blue-800 mb-3">
               {section.toUpperCase()}
             </h2>
-            <ul>
+            <ul className="space-y-3">
               {data[section].map((item, index) => (
-                <li key={index}>
+                <li
+                  key={index}
+                  className="flex items-center justify-between bg-gray-100 p-3 rounded-md hover:bg-gray-200 transition"
+                >
                   {editingItem?.section === section &&
                   editingItem.index === index ? (
-                    <>
+                    <div className="flex items-center w-full space-x-2">
                       <input
                         type="text"
                         value={editingItem.value}
@@ -129,23 +113,24 @@ export default function PeoPsoPeoPage() {
                             value: e.target.value,
                           })
                         }
-                        style={{ marginRight: "0.5rem" }}
+                        className="flex-1 border rounded-md px-2 py-1"
                       />
                       <button
                         onClick={() =>
                           handleSaveClick(section, index, editingItem.value)
                         }
+                        className="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700"
                       >
                         Save
                       </button>
-                    </>
+                    </div>
                   ) : (
                     <>
                       <span
                         onClick={() =>
                           setEditingItem({ section, index, value: item })
                         }
-                        style={{ cursor: "pointer" }}
+                        className="flex-1 cursor-pointer"
                       >
                         {index + 1}. {item}
                       </span>
@@ -153,7 +138,7 @@ export default function PeoPsoPeoPage() {
                         onClick={() =>
                           handleDeleteClick(section, index, item)
                         }
-                        style={{ marginLeft: "0.5rem", color: "red" }}
+                        className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 ml-2"
                       >
                         Delete
                       </button>
