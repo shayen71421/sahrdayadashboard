@@ -1,5 +1,5 @@
 import { db } from "./firebase.js";
-import { doc, getDoc, updateDoc, arrayUnion, arrayRemove, collection, getDocs , deleteDoc, setDoc  } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, arrayUnion, arrayRemove, collection, getDocs , deleteDoc, setDoc, deleteField  } from 'firebase/firestore';
 
 export const fetchPoPsoPeo = async (departmentId, programId) => {
   try {
@@ -28,13 +28,20 @@ export const fetchPoPsoPeo = async (departmentId, programId) => {
 // Function to fetch all labs for a given department
 export const getLabs = async (departmentId) => {
   try {
-    const labsRef = collection(db, 'department', departmentId, 'facilities', 'labs', 'labs');
-    const labsSnapshot = await getDocs(labsRef);
-    const labs = labsSnapshot.docs.map(doc => ({
-      id: doc.id, // Include document ID as lab ID
-      ...doc.data()
-    }));
-    return labs;
+    // Target the specific document at department/cse/facilities/labs
+    const docRef = doc(db, 'department', departmentId, 'facilities', 'labs');
+    const docSnap = await getDoc(docRef);
+
+    if (docSnap.exists()) {
+      const data = docSnap.data();
+      console.log("Raw document data:", data); // Add logging here
+      // Extract arrays from the document data, assuming each is a lab
+      const labs = Object.keys(data).filter(key => Array.isArray(data[key])).map(key => ({ id: key, data: data[key] }));
+      return labs;
+    } else {
+      console.log("No labs document found!");
+      return [];
+    }
   } catch (error) {
     console.error("Error fetching labs: ", error);
     throw error;
@@ -61,9 +68,10 @@ export const getLabDetails = async (departmentId, labId) => {
 // Function to add a new lab
 export const addLab = async (departmentId, labData) => {
   try {
-    const labsCollectionRef = collection(db, 'department', departmentId, 'facilities', 'labs', 'labs');
-    await addDoc(labsCollectionRef, labData);
-    console.log("Lab added successfully!");
+    // Target the specific document at department/cse/facilities/labs
+    const docRef = doc(db, 'department', departmentId, 'facilities', 'labs');
+    // Update the document to add a new field with labName as the key and an empty array as the value
+    await updateDoc(docRef, { [labData]: ['', '', '', ''] });
   } catch (error) {
     console.error("Error adding lab: ", error);
     throw error;
@@ -85,8 +93,8 @@ export const updateLab = async (departmentId, labId, updatedLabData) => {
 // Function to delete a lab
 export const deleteLab = async (departmentId, labId) => {
   try {
-    const docRef = doc(db, 'department', departmentId, 'facilities', 'labs', 'labs', labId);
-    await deleteDoc(docRef);
+    const docRef = doc(db, 'department', departmentId, 'facilities', 'labs');
+    await updateDoc(docRef, { [labId]: deleteField() });
     console.log("Lab deleted successfully!");
   } catch (error) {
     console.error("Error deleting lab: ", error);
