@@ -71,18 +71,24 @@ This section of the application provides a dashboard for managing department-spe
     *   This page displays information about all labs within the department.
     *   It will fetch data for all labs and present it on a single page.
     *   This eliminates the need for separate pages for individual lab details.
+*   **Editing Lab Data:** The elements within each lab's array (at indices 0-3) will be editable directly on this page.
+    *   Index 0 will be labeled "Subtext".
+    *   Indices 1, 2, and 3 will be labeled "Feature 1", "Feature 2", and "Feature 3" respectively.
+    *   Saving edited data will be triggered by a 'Save' button for each lab. Clicking this button will save the current edited data for that specific lab to the corresponding array in the `department/cse/facilities/labs` document in Firestore.
 *   **Firestore Structure:** Lab data is stored as arrays within a single document located at `department/cse/facilities/labs`. Each array within this document represents a different lab.
 *   **Adding a Lab:** Adding a new lab involves adding a new array to the `department/cse/facilities/labs` document, where the key of the new array is the name of the new lab. This new array will be initialized with a size of 4, containing empty strings.
+*   **Editing Lab Data:** The elements within each lab's array (at indices 0-3) will be editable directly on this page.
+    *   Index 0 will be labeled "Subtext".
+    *   Indices 1, 2, and 3 will be labeled "Feature 1", "Feature 2", and "Feature 3" respectively.
+    *   Changes made to these editable fields will be saved to the corresponding array in the `department/cse/facilities/labs` document in Firestore when the input field loses focus (on blur).
 *   **Data Fetching:** The page will fetch the document at `department/cse/facilities/labs`, iterate over its fields, and extract the data from the arrays within it to display each lab.
 *   **Display:** The page will display the name of each lab (which is the key in the Firestore document) and the contents of the array associated with that lab. It will also list the names of all other arrays present within the lab's data.
-*   **New Functionality:** Users will be able to delete individual labs directly from this page. This involves adding a delete control for each lab and implementing a handler that utilizes the `deleteLab` function from `src/utils/department_dashboard_function.js`.
 *   The page will display the contents of the 'lab name' array for each lab, and also list the names of all other arrays present within the lab's data.
  
 *   **Library Page (`src/app/department-dashboard/facilities/library/page.tsx`)**:
 *   This page displays information about the department's library.
 *   It will fetch and display relevant library details.
 *   **Deleting a Lab:** Deleting a lab involves removing the corresponding array field (using the lab name as the key) from the `department/cse/facilities/labs` document in Firestore.
-
   
 *   **Individual Lab Detail Page (`src/app/department-dashboard/facilities/labs/[labId]/page.tsx`) - REMOVED**:
     *   This page has been removed as individual lab details are now displayed on the main Labs page (`src/app/department-dashboard/facilities/labs/page.tsx`).

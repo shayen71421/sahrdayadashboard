@@ -102,6 +102,20 @@ export const deleteLab = async (departmentId, labId) => {
   }
 };
 
+// Function to update a specific lab's data (the array)
+export const updateLabData = async (departmentId, labId, updatedData) => {
+  try {
+    // Target the specific document at department/cse/facilities/labs
+    const docRef = doc(db, 'department', departmentId, 'facilities', 'labs');
+    // Update the document to modify the field with labId as the key
+    await updateDoc(docRef, { [labId]: updatedData });
+    console.log(`Lab data for ${labId} updated successfully!`);
+  } catch (error) {
+    console.error(`Error updating lab data for ${labId}: `, error);
+    throw error;
+  }
+};
+
 // Function to fetch library details
 export const getLibrary = async (departmentId) => {
     try {
