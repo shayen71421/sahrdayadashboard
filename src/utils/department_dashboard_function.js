@@ -18,6 +18,104 @@ export const fetchPoPsoPeo = async (departmentId, programId) => {
   }
 };
 
+// Functions for Facilities (Labs and Library)
+
+// Function to fetch all labs for a given department
+export const getLabs = async (departmentId) => {
+  try {
+    const labsRef = collection(db, 'department', departmentId, 'facilities', 'labs', 'labs');
+    const labsSnapshot = await getDocs(labsRef);
+    const labs = labsSnapshot.docs.map(doc => ({
+      id: doc.id, // Include document ID as lab ID
+      ...doc.data()
+    }));
+    return labs;
+  } catch (error) {
+    console.error("Error fetching labs: ", error);
+    throw error;
+  }
+};
+
+// Function to fetch details of a specific lab
+export const getLabDetails = async (departmentId, labId) => {
+  try {
+    const docRef = doc(db, 'department', departmentId, 'facilities', 'labs', 'labs', labId);
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) {
+      return { id: docSnap.id, ...docSnap.data() };
+    } else {
+      console.error("Lab document does not exist.");
+      return null;
+    }
+  } catch (error) {
+    console.error("Error fetching lab details: ", error);
+    throw error;
+  }
+};
+
+// Function to add a new lab
+export const addLab = async (departmentId, labData) => {
+  try {
+    const labsCollectionRef = collection(db, 'department', departmentId, 'facilities', 'labs', 'labs');
+    await addDoc(labsCollectionRef, labData);
+    console.log("Lab added successfully!");
+  } catch (error) {
+    console.error("Error adding lab: ", error);
+    throw error;
+  }
+};
+
+// Function to update an existing lab
+export const updateLab = async (departmentId, labId, updatedLabData) => {
+  try {
+    const docRef = doc(db, 'department', departmentId, 'facilities', 'labs', 'labs', labId);
+    await updateDoc(docRef, updatedLabData);
+    console.log("Lab updated successfully!");
+  } catch (error) {
+    console.error("Error updating lab: ", error);
+    throw error;
+  }
+};
+
+// Function to delete a lab
+export const deleteLab = async (departmentId, labId) => {
+  try {
+    const docRef = doc(db, 'department', departmentId, 'facilities', 'labs', 'labs', labId);
+    await deleteDoc(docRef);
+    console.log("Lab deleted successfully!");
+  } catch (error) {
+    console.error("Error deleting lab: ", error);
+    throw error;
+  }
+};
+
+// Function to fetch library details
+export const getLibrary = async (departmentId) => {
+    try {
+        const docRef = doc(db, 'department', departmentId, 'facilities', 'library');
+        const docSnap = await getDoc(docRef);
+        return docSnap.exists() ? { id: docSnap.id, ...docSnap.data() } : null;
+    } catch (error) {
+        console.error("Error fetching library: ", error);
+        throw error;
+    }
+};
+
+// Function to update library details
+export const updateLibrary = async (departmentId, updatedLibraryData) => {
+    try {
+        const docRef = doc(db, 'department', departmentId, 'facilities', 'library');
+        await updateDoc(docRef, updatedLibraryData);
+        console.log("Library updated successfully!");
+    } catch (error) {
+        console.error("Error updating library: ", error);
+        throw error;
+    }
+};
+
+
+
+
 // Function to add a new program
 export const addProgram = async (departmentId, programId) => {
   try {

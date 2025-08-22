@@ -22,18 +22,25 @@ const DepartmentDashboardLayout = ({
                 PEO, PSO, PO
               </Link>
             </li>
-             <li>
-               <a href="/department-dashboard/programmes-offered">Programmes Offered</a>
-              </li>
-
-            {/* Future nav links */}
             <li>
               <Link
-                href="/department-dashboard/courses"
+                href="/department-dashboard/programmes-offered"
                 className="block px-3 py-2 rounded hover:bg-gray-700 transition"
               >
-                Courses
+                Programmes Offered
               </Link>
+            </li>
+            <li>
+              <span className="block px-3 py-2 rounded hover:bg-gray-700 transition cursor-pointer">Facilities</span>
+              <ul className="ml-4 space-y-2">
+                <li>
+                  <Link href="/department-dashboard/facilities/labs" className="block px-3 py-2 rounded hover:bg-gray-700 transition">Labs</Link>
+                </li>
+                <li>
+                  <Link href="/department-dashboard/facilities/library" className="block px-3 py-2 rounded hover:bg-gray-700 transition">Library</Link>
+                </li>
+              </ul>
+
             </li>
           </ul>
         </nav>
