@@ -1,9 +1,14 @@
-import { db } from '../utils/firebase.js';
+import { db } from "./firebase.js";
 import { doc, getDoc, updateDoc, arrayUnion, arrayRemove, collection, getDocs , deleteDoc, setDoc  } from 'firebase/firestore';
 
 export const fetchPoPsoPeo = async (departmentId, programId) => {
   try {
-    const docRef = doc(db, 'department', departmentId, 'poPsoPeo', programId);
+    // Construct the document path correctly based on your Firestore structure
+    const docRef = doc(db, 'department', departmentId, 'poPsoPeo', 'btech');
+    console.log(`Attempting to update document at path: department/${departmentId}/poPsoPeo/btech`);
+    console.log(`Updating array: ${arrayName}`);
+    console.log(`Replacing old item: "${oldItem}" with new item: "${newItem}"`);
+
     const docSnap = await getDoc(docRef);
 
     if (docSnap.exists()) {
@@ -142,6 +147,45 @@ export const addPoPsoPeoItem = async (departmentId, programId, arrayName, newIte
   }
 };
 
+export const addPeo = async (departmentId, programId, peoText) => {
+  try {
+    const docRef = doc(db, 'department', departmentId, 'poPsoPeo', programId);
+    await updateDoc(docRef, {
+      peo: arrayUnion(peoText)
+    });
+    console.log("PEO added successfully!");
+  } catch (error) {
+    console.error("Error adding PEO: ", error);
+    throw error;
+  }
+};
+
+export const addPso = async (departmentId, programId, psoText) => {
+  try {
+    const docRef = doc(db, 'department', departmentId, 'poPsoPeo', programId);
+    await updateDoc(docRef, {
+      pso: arrayUnion(psoText)
+    });
+    console.log("PSO added successfully!");
+  } catch (error) {
+    console.error("Error adding PSO: ", error);
+    throw error;
+  }
+};
+
+export const addPo = async (departmentId, programId, poText) => {
+  try {
+    const docRef = doc(db, 'department', departmentId, 'poPsoPeo', programId);
+    await updateDoc(docRef, {
+      po: arrayUnion(poText)
+    });
+    console.log("PO added successfully!");
+  } catch (error) {
+    console.error("Error adding PO: ", error);
+    throw error;
+  }
+};
+
 export const removePoPsoPeoItem = async (departmentId, programId, arrayName, itemToRemove) => {
   try {
     const docRef = doc(db, 'department', departmentId, 'poPsoPeo', programId);
@@ -175,6 +219,7 @@ export const updatePoPsoPeoItem = async (departmentId, programId, arrayName, old
         const updatedArray = [...currentArray];
         updatedArray[index] = newItem;
 
+        console.log("Updated array:", updatedArray);
         await updateDoc(docRef, {
           [arrayName]: updatedArray
         });
@@ -184,6 +229,7 @@ export const updatePoPsoPeoItem = async (departmentId, programId, arrayName, old
       }
     } else {
       console.log("Document not found!");
+      // Optionally, create the document if it doesn't exist and add the item
     }
   } catch (error) {
     console.error("Error updating item: ", error);

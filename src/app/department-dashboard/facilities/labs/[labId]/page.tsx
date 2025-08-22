@@ -25,7 +25,17 @@ const LabDetailsPage = () => {
       if (!labId) return;
       try {
         const details = await getLabDetails(departmentId, labId);
-        setLabDetails(details as LabDetails);
+ if (details) {
+ const labData = details as any; // Temporarily cast to any to access properties
+ setLabDetails({
+ Name: labData.Name || '',
+ subText: labData.subText || '',
+ features: Array.isArray(labData.features) ? labData.features as string[] : ['', '', ''],
+ });
+ } else {
+ setLabDetails(null);
+ }
+
       } catch (err) {
         setError('Failed to load lab details.');
         console.error(err);

@@ -20,7 +20,16 @@ const LabsPage = () => {
     const fetchLabs = async () => {
       try {
         const labsData = await getLabs(departmentId);
-        setLabs(labsData.map((lab: any) => ({ id: lab.id, Name: lab.Name })));
+        console.log("Fetched labs data:", labsData); // Log fetched data
+        // Ensure that the fetched data is an array and has the expected structure
+        if (Array.isArray(labsData)) {
+ setLabs(labsData.map((lab: any) => ({
+ id: lab.id,
+ Name: lab.Name || 'Unnamed Lab' // Provide a default name if missing
+ })) as Lab[]);
+        } else {
+ setLabs([]); // Set to empty array if data is not as expected
+ }
       } catch (error) {
         console.error("Error fetching labs:", error);
       } finally {
@@ -50,13 +59,7 @@ const LabsPage = () => {
       </button>
       <ul>
         {labs.map((lab) => (
-          <li key={lab.id} className="mb-2">
-            <Link href={`/department-dashboard/facilities/labs/${lab.id}`}>
-              <span className="text-blue-600 hover:underline cursor-pointer">
-                {lab.Name}
-              </span>
-            </Link>
-          </li>
+ <li key={lab.id}>{lab.Name}</li> // Simplified rendering and correct closing tag
         ))}
       </ul>
     </div>

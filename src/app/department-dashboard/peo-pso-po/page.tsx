@@ -5,6 +5,7 @@ import {
   getPoPsoPeo,
   removePoPsoPeoItem,
   updatePoPsoPeoItem,
+ addPoPsoPeoItem,
 } from "../../../utils/department_dashboard_function";
 
 interface PoPsoPeoData {
@@ -14,7 +15,7 @@ interface PoPsoPeoData {
 }
 
 interface EditingItem {
-  section: string;
+  section: keyof PoPsoPeoData;
   index: number;
   value: string;
 }
@@ -25,6 +26,7 @@ export default function PeoPsoPeoPage() {
   const [error, setError] = useState<Error | null>(null);
   const [editingItem, setEditingItem] = useState<EditingItem | null>(null);
 
+  // ✅ Fetch once
   useEffect(() => {
     async function fetchData() {
       try {
@@ -36,32 +38,50 @@ export default function PeoPsoPeoPage() {
         setLoading(false);
       }
     }
-
     fetchData();
   }, []);
 
+  // ✅ Save edits or new item
   const handleSaveClick = async (
-    section: string,
+    section: keyof PoPsoPeoData,
     index: number,
     newValue: string
   ) => {
     if (!data) return;
 
     try {
-      const oldItem = data[section as keyof PoPsoPeoData][index];
-      await updatePoPsoPeoItem("cse", "btech", section, oldItem, newValue);
+      if (index === data[section].length - 1 && data[section][index] === "") {
+        // Adding new item
+ await addPoPsoPeoItem("cse", "btech", section, newValue);
+      } else {
+        // Updating existing item
+        const oldItem = data[section][index];
+        if (oldItem !== newValue) {
+          await updatePoPsoPeoItem("cse", "btech", section, oldItem, newValue);
+        }
+      }
 
-      const updatedData = { ...data };
-      (updatedData as any)[section][index] = newValue;
-      setData(updatedData);
+      // ✅ Update state immutably
+      setData((prev) =>
+        prev
+          ? {
+              ...prev,
+              [section]: prev[section].map((val, i) =>
+                i === index ? newValue : val
+              ),
+            }
+          : prev
+      );
+
       setEditingItem(null);
     } catch (err) {
       console.error("Error updating item:", err);
     }
   };
 
+  // ✅ Delete functionality
   const handleDeleteClick = async (
-    section: string,
+    section: keyof PoPsoPeoData,
     index: number,
     itemToDelete: string
   ) => {
@@ -70,14 +90,37 @@ export default function PeoPsoPeoPage() {
     try {
       await removePoPsoPeoItem("cse", "btech", section, itemToDelete);
 
-      const updatedData = { ...data };
-      (updatedData as any)[section] = (updatedData as any)[section].filter(
-        (_: string, i: number) => i !== index
+      setData((prev) =>
+        prev
+          ? {
+              ...prev,
+              [section]: prev[section].filter((_, i) => i !== index),
+            }
+          : prev
       );
-      setData(updatedData);
     } catch (err) {
       console.error("Error deleting item:", err);
     }
+  };
+
+  // ✅ Add new item placeholder
+  const handleAddItem = (section: keyof PoPsoPeoData) => {
+    if (!data) return;
+
+    setData((prev) =>
+      prev
+        ? {
+            ...prev,
+            [section]: [...prev[section], ""], // add empty string
+          }
+        : prev
+    );
+
+    setEditingItem({
+      section,
+      index: data[section].length,
+      value: "",
+    });
   };
 
   if (loading)
@@ -94,7 +137,14 @@ export default function PeoPsoPeoPage() {
           <div key={section} className="mb-8">
             <h2 className="text-xl font-semibold text-blue-800 mb-3">
               {section.toUpperCase()}
+              <button
+                onClick={() => handleAddItem(section)}
+                className="ml-4 px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm"
+              >
+                Add New
+              </button>
             </h2>
+
             <ul className="space-y-3">
               {data[section].map((item, index) => (
                 <li
@@ -132,7 +182,7 @@ export default function PeoPsoPeoPage() {
                         }
                         className="flex-1 cursor-pointer"
                       >
-                        {index + 1}. {item}
+                        {index + 1}. {item || <em>(Empty)</em>}
                       </span>
                       <button
                         onClick={() =>
