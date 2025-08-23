@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useContext } from "react";
 import {
   addProgram,
   getProgrammesOffered,
@@ -10,7 +10,8 @@ import {
   deleteProgram,
   deleteProgramCard,
   updateProgramCard,
-} from "../../../utils/department_dashboard_function";
+} from '../../../../utils/department_dashboard_function';
+import { DepartmentContext } from "../layout"; // Assuming you have a context for departmentId
 
 interface Programme {
   id: string;
@@ -20,6 +21,8 @@ interface Programme {
 }
 
 export default function ProgrammesOfferedPage() {
+  const departmentContext = useContext(DepartmentContext);
+
   const [programmes, setProgrammes] = useState<Programme[]>([]);
   const [selectedProgram, setSelectedProgram] = useState<Programme | null>(null);
   const [loading, setLoading] = useState(true);
@@ -36,24 +39,32 @@ export default function ProgrammesOfferedPage() {
   const [newCardTitle, setNewCardTitle] = useState("");
   const [newCardText, setNewCardText] = useState("");
 
+  const departmentId = departmentContext?.departmentId;
+  if (!departmentId) {
+    return <div className="text-gray-700">Loading department data...</div>;
+  }
+
   useEffect(() => {
-    async function fetchProgrammes() {
+    if (!departmentId) {
+      return; // Don't fetch if departmentId is not available
+    }
+    const fetchProgrammes = async () => {
       try {
-        const programmesData = await getProgrammesOffered("cse");
-        setProgrammes(programmesData);
+        const programmesData = await getProgrammesOffered(departmentId);
+        setProgrammes(programmesData); 
       } catch (err) {
         setError(err as Error);
       } finally {
         setLoading(false);
       }
-    }
+    };
     fetchProgrammes();
-  }, []);
+  }, [departmentId]); // Add departmentId to the dependency array
 
   const handleProgramSelect = async (programId: string) => {
     try {
-      setLoading(true);
-      const programDetails = await getProgramDetails("cse", programId);
+      setLoading(true); // Keep loading true until details are fetched
+      const programDetails = await getProgramDetails(departmentId, programId);
       setSelectedProgram(programDetails);
     } catch (err) {
       setError(err as Error);
@@ -65,10 +76,10 @@ export default function ProgrammesOfferedPage() {
   const handleAddProgram = async () => {
     if (!newProgramId.trim()) return;
     try {
-      await addProgram("cse", newProgramId);
+      await addProgram(departmentId, newProgramId);
       setNewProgramId("");
-      setShowAddProgramInput(false);
-      const programmesData = await getProgrammesOffered("cse");
+      setShowAddProgramInput(false); // Hide input after adding
+      const programmesData = await getProgrammesOffered(departmentId);
       setProgrammes(programmesData);
     } catch (err) {
       setError(err as Error);
@@ -78,11 +89,12 @@ export default function ProgrammesOfferedPage() {
   const handleSaveMainText = async () => {
     if (!editingProgramId) return;
     try {
-      await updateProgramMainText("cse", editingProgramId, editingMainText);
+      await updateProgramMainText(departmentId, editingProgramId, editingMainText);
       setEditingProgramId(null);
       setEditingMainText("");
-      const programmesData = await getProgrammesOffered("cse");
+      const programmesData = await getProgrammesOffered(departmentId);
       setProgrammes(programmesData);
+      // Optionally re-fetch selected program details to update the view
     } catch (err) {
       setError(err as Error);
     }
@@ -92,17 +104,18 @@ export default function ProgrammesOfferedPage() {
     if (!editingProgramId || editingCardIndex === null) return;
     try {
       await updateProgramCard(
-        "cse",
+        departmentId,
         editingProgramId,
         editingCardIndex,
         editingCardTitle,
         editingCardText
-      );
+        );
       setEditingProgramId(null);
       setEditingCardIndex(null);
       setEditingCardTitle("");
       setEditingCardText("");
       const programmesData = await getProgrammesOffered("cse");
+      // Optionally re-fetch selected program details to update the view
       setProgrammes(programmesData);
     } catch (err) {
       setError(err as Error);
@@ -112,8 +125,8 @@ export default function ProgrammesOfferedPage() {
   const handleAddCard = async (programId: string) => {
     if (!newCardTitle.trim() || !newCardText.trim()) return;
     try {
-      await addProgramCard("cse", programId, newCardTitle, newCardText);
-      const programDetails = await getProgramDetails("cse", programId);
+      await addProgramCard(departmentId, programId, newCardTitle, newCardText);
+      const programDetails = await getProgramDetails(departmentId, programId);
       setSelectedProgram(programDetails);
       const programmesData = await getProgrammesOffered("cse");
       setProgrammes(programmesData);
@@ -129,8 +142,8 @@ export default function ProgrammesOfferedPage() {
 
   const handleDeleteProgram = async (programId: string) => {
     if (window.confirm(`Are you sure you want to delete program ${programId}?`)) {
-      await deleteProgram("cse", programId);
-      const programmesData = await getProgrammesOffered("cse");
+      await deleteProgram(departmentId, programId);
+      const programmesData = await getProgrammesOffered(departmentId);
       setProgrammes(programmesData);
       setSelectedProgram(null);
     }
@@ -138,19 +151,20 @@ export default function ProgrammesOfferedPage() {
 
   const handleDeleteCard = async (programId: string, cardIndex: number) => {
     if (window.confirm("Are you sure you want to delete this card?")) {
-      await deleteProgramCard("cse", programId, cardIndex);
-      await handleProgramSelect(programId);
+      await deleteProgramCard(departmentId, programId, cardIndex);
+      await handleProgramSelect(programId); // Refresh selected program details
     }
   };
 
-  if (loading) return <div className="text-gray-700">Loading...</div>;
-  if (error) return <div className="text-red-600">Error: {error.message}</div>;
 
   return (
     <div className="bg-white text-gray-800 min-h-screen p-6 rounded-md shadow">
       <h1 className="text-3xl font-bold text-blue-900 mb-6">
         Programmes Offered
       </h1>
+
+      {loading && <div className="text-gray-700">Loading...</div>}
+      {error && <div className="text-red-600">Error: {error.message}</div>}
 
       {/* Programmes List */}
       <div className="mb-6">
@@ -160,6 +174,7 @@ export default function ProgrammesOfferedPage() {
         <ul className="space-y-2">
           {programmes.map((program) => (
             <li
+
               key={program.id}
               className="flex justify-between items-center px-4 py-2 bg-gray-100 rounded hover:bg-gray-200 transition"
             >

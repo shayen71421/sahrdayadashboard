@@ -260,7 +260,7 @@ export const updatePoPsoPeoItem = async (departmentId, programId, arrayName, old
 };
 
 export async function getPoPsoPeo(department) {
-    const poPsoPeoRef = collection(db, 'department', 'cse', 'poPsoPeo');
+    const poPsoPeoRef = collection(db, 'department', department, 'poPsoPeo');
     const poPsoPeoSnapshot = await getDocs(poPsoPeoRef);
     const poPsoPeo = poPsoPeoSnapshot.docs.map(doc => doc.data());
     return poPsoPeo;
