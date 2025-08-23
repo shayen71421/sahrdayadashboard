@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 import { getLibrary, updateLibrary } from "@/utils/department_dashboard_function";
-import { useRouter } from "next/navigation";
+import { DepartmentContext } from "../../layout";
 
 interface LibraryData {
   shortDesc: string;
@@ -15,9 +15,14 @@ export default function LibraryPage() {
   const [libraryData, setLibraryData] = useState<LibraryData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isEditing, setIsEditing] = useState(false);
-  const router = useRouter();
-  const departmentId = "cse"; // Replace with actual department ID logic
+  const [isEditing, setIsEditing] = useState(false);  
+  const departmentContext = useContext(DepartmentContext);
+  const departmentId = departmentContext?.departmentId;
+
+  if (!departmentId) {
+    return <div className="text-gray-700">Loading department data...</div>;
+  }
+
 
   useEffect(() => {
     const fetchLibraryData = async () => {
