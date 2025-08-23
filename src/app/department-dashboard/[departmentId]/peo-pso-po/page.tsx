@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useContext } from "react";
 import {
   getPoPsoPeo,
   removePoPsoPeoItem,
   updatePoPsoPeoItem,
  addPoPsoPeoItem,
 } from "../../../../utils/department_dashboard_function";
+import { DepartmentContext } from "../layout";
 
 interface PoPsoPeoData {
   po: string[];
@@ -24,13 +25,20 @@ export default function PeoPsoPeoPage() {
   const [data, setData] = useState<PoPsoPeoData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
-  const [editingItem, setEditingItem] = useState<EditingItem | null>(null);
+ const [editingItem, setEditingItem] = useState<EditingItem | null>(null);
+
+  const departmentContext = useContext(DepartmentContext);
+
+  const departmentId = departmentContext?.departmentId;
+  if (!departmentId) {
+ return <div className="text-gray-700">Loading department data...</div>;
+  }
 
   // ✅ Fetch once
-  useEffect(() => {
+ useEffect(() => {
     async function fetchData() {
       try {
-        const departmentData = await getPoPsoPeo("cse");
+ const departmentData = await getPoPsoPeo(departmentId);
         setData((departmentData[0] as PoPsoPeoData) || null);
       } catch (err) {
         setError(err as Error);
@@ -38,8 +46,8 @@ export default function PeoPsoPeoPage() {
         setLoading(false);
       }
     }
-    fetchData();
-  }, []);
+ fetchData(); // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [departmentId]);
 
   // ✅ Save edits or new item
   const handleSaveClick = async (
@@ -52,9 +60,8 @@ export default function PeoPsoPeoPage() {
     try {
       if (index === data[section].length - 1 && data[section][index] === "") {
         // Adding new item
- await addPoPsoPeoItem("cse", "btech", section, newValue);
+ await addPoPsoPeoItem(departmentId, "btech", section, newValue);
       } else {
-        // Updating existing item
         const oldItem = data[section][index];
         if (oldItem !== newValue) {
           await updatePoPsoPeoItem("cse", "btech", section, oldItem, newValue);
@@ -88,7 +95,7 @@ export default function PeoPsoPeoPage() {
     if (!data) return;
 
     try {
-      await removePoPsoPeoItem("cse", "btech", section, itemToDelete);
+      await removePoPsoPeoItem(departmentId, "btech", section, itemToDelete);
 
       setData((prev) =>
         prev
