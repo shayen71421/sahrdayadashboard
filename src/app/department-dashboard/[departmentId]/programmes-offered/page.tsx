@@ -11,7 +11,7 @@ import {
   deleteProgramCard,
   updateProgramCard,
 } from '../../../../utils/department_dashboard_function';
-import { DepartmentContext } from "../layout"; // Assuming you have a context for departmentId
+import { DepartmentContext } from "../layout"; 
 
 interface Programme {
   id: string;
@@ -45,9 +45,7 @@ export default function ProgrammesOfferedPage() {
   }
 
   useEffect(() => {
-    if (!departmentId) {
-      return; // Don't fetch if departmentId is not available
-    }
+    if (!departmentId) return;
     const fetchProgrammes = async () => {
       try {
         const programmesData = await getProgrammesOffered(departmentId);
@@ -59,11 +57,11 @@ export default function ProgrammesOfferedPage() {
       }
     };
     fetchProgrammes();
-  }, [departmentId]); // Add departmentId to the dependency array
+  }, [departmentId]);
 
   const handleProgramSelect = async (programId: string) => {
     try {
-      setLoading(true); // Keep loading true until details are fetched
+      setLoading(true);
       const programDetails = await getProgramDetails(departmentId, programId);
       setSelectedProgram(programDetails);
     } catch (err) {
@@ -78,7 +76,7 @@ export default function ProgrammesOfferedPage() {
     try {
       await addProgram(departmentId, newProgramId);
       setNewProgramId("");
-      setShowAddProgramInput(false); // Hide input after adding
+      setShowAddProgramInput(false);
       const programmesData = await getProgrammesOffered(departmentId);
       setProgrammes(programmesData);
     } catch (err) {
@@ -90,11 +88,15 @@ export default function ProgrammesOfferedPage() {
     if (!editingProgramId) return;
     try {
       await updateProgramMainText(departmentId, editingProgramId, editingMainText);
+
+      // ✅ refresh selected program
+      const updatedProgram = await getProgramDetails(departmentId, editingProgramId);
+      setSelectedProgram(updatedProgram);
+
       setEditingProgramId(null);
       setEditingMainText("");
       const programmesData = await getProgrammesOffered(departmentId);
       setProgrammes(programmesData);
-      // Optionally re-fetch selected program details to update the view
     } catch (err) {
       setError(err as Error);
     }
@@ -109,13 +111,17 @@ export default function ProgrammesOfferedPage() {
         editingCardIndex,
         editingCardTitle,
         editingCardText
-        );
+      );
+
+      // ✅ refresh selected program
+      const updatedProgram = await getProgramDetails(departmentId, editingProgramId);
+      setSelectedProgram(updatedProgram);
+
       setEditingProgramId(null);
       setEditingCardIndex(null);
       setEditingCardTitle("");
       setEditingCardText("");
-      const programmesData = await getProgrammesOffered("cse");
-      // Optionally re-fetch selected program details to update the view
+      const programmesData = await getProgrammesOffered(departmentId);
       setProgrammes(programmesData);
     } catch (err) {
       setError(err as Error);
@@ -126,12 +132,14 @@ export default function ProgrammesOfferedPage() {
     if (!newCardTitle.trim() || !newCardText.trim()) return;
     try {
       await addProgramCard(departmentId, programId, newCardTitle, newCardText);
+
+      // ✅ refresh selected program
       const programDetails = await getProgramDetails(departmentId, programId);
       setSelectedProgram(programDetails);
-      const programmesData = await getProgrammesOffered("cse");
+
+      const programmesData = await getProgrammesOffered(departmentId);
       setProgrammes(programmesData);
 
-      // reset form
       setShowAddCardInputForProgramId(null);
       setNewCardTitle("");
       setNewCardText("");
@@ -156,7 +164,6 @@ export default function ProgrammesOfferedPage() {
     }
   };
 
-
   return (
     <div className="bg-white text-gray-800 min-h-screen p-6 rounded-md shadow">
       <h1 className="text-3xl font-bold text-blue-900 mb-6">
@@ -174,7 +181,6 @@ export default function ProgrammesOfferedPage() {
         <ul className="space-y-2">
           {programmes.map((program) => (
             <li
-
               key={program.id}
               className="flex justify-between items-center px-4 py-2 bg-gray-100 rounded hover:bg-gray-200 transition"
             >
