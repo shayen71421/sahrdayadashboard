@@ -1,25 +1,22 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
+import { getAuth } from "firebase/auth";
 
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
 
-// Your web app's Firebase configuration
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+
 const firebaseConfig = {
-  apiKey: "AIzaSyB4hwUZP66xgMpQpbWPLUVV_AoNxlC1TCg",
-  authDomain: "sahrdaya-website.firebaseapp.com",
-  databaseURL: "https://sahrdaya-website-default-rtdb.firebaseio.com",
-  projectId: "sahrdaya-website",
-  storageBucket: "sahrdaya-website.firebasestorage.app",
-  messagingSenderId: "8725740882",
-  appId: "1:8725740882:web:2921b3f1c4d93e78aa4e8b",
-  measurementId: "G-TG2SZVPKGV"
+  apiKey: "AIzaSyBJFN0ZyrBRdjSIz0I3uG5W7NcugN9wU2w",
+  authDomain: "college-website-27cf1.firebaseapp.com",
+  projectId: "college-website-27cf1",
+  storageBucket: "college-website-27cf1.firebasestorage.app",
+  messagingSenderId: "622259084207",
+  appId: "1:622259084207:web:73cbf66c2e8cf5d1716d5a"
 };
+
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
-
+const auth = getAuth(app);
 const db = getFirestore(app);
 export { app, db };
