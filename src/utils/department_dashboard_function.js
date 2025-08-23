@@ -24,6 +24,39 @@ export const fetchPoPsoPeo = async (departmentId, programId) => {
   }
 };
 
+// Functions for About Department
+
+// Function to fetch About Department data
+export const getAboutDepartment = async (departmentId) => {
+  try {
+    const docRef = doc(db, 'department', departmentId, 'aboutDepartment', 'generalBrief');
+    const visionMissionRef = doc(db, 'department', departmentId, 'aboutDepartment', 'vision&Mission');
+
+    const docSnap = await getDoc(docRef);
+    const visionMissionSnap = await getDoc(visionMissionRef);
+
+    const generalBriefData = docSnap.exists() ? docSnap.data() : {};
+    const visionMissionData = visionMissionSnap.exists() ? visionMissionSnap.data() : {};
+
+    return { generalBrief: generalBriefData, visionMission: visionMissionData };
+  } catch (error) {
+    console.error("Error fetching About Department data: ", error);
+    throw error;
+  }
+};
+
+// Function to update About Department data
+export const updateAboutDepartment = async (departmentId, updatedData) => {
+  try {
+    // Assuming updatedData has keys 'generalBrief' and 'visionMission' corresponding to document IDs
+    await updateDoc(doc(db, 'department', departmentId, 'aboutDepartment', 'generalBrief'), updatedData.generalBrief);
+    await updateDoc(doc(db, 'department', departmentId, 'aboutDepartment', 'vision&Mission'), updatedData.visionMission);
+  } catch (error) {
+    console.error("Error updating About Department data: ", error);
+    throw error;
+  }
+};
+
 export const uploadHodPhoto = async (departmentId, file) => {
   try {
     // Create a storage reference with the specified path and filename

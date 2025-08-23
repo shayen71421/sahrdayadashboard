@@ -30,6 +30,14 @@ const DepartmentDashboardLayout = ({ children, params }: LayoutProps) => {
         <nav className="p-4">
           <ul className="space-y-3 text-sm">
             <li>
+              <Link
+                href={`/department-dashboard/${departmentId}/about-department`}
+                className="block rounded-lg px-3 py-2 text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+              >
+                About Department
+              </Link>
+            </li>
+            <li>
  <Link
  href={`/department-dashboard/${departmentId}/hod-message`}
  className="block rounded-lg px-3 py-2 text-gray-700 hover:bg-gray-100 hover:text-gray-900"
