@@ -1,5 +1,6 @@
-import { db } from "./firebase.js";
+import { db, storage } from "./firebase.js";
 import { doc, getDoc, updateDoc, arrayUnion, arrayRemove, collection, getDocs , deleteDoc, setDoc, deleteField  } from 'firebase/firestore';
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
 export const fetchPoPsoPeo = async (departmentId, programId) => {
   try {
@@ -22,6 +23,63 @@ export const fetchPoPsoPeo = async (departmentId, programId) => {
     throw error;
   }
 };
+
+export const uploadHodPhoto = async (departmentId, file) => {
+  try {
+    // Create a storage reference with the specified path and filename
+    const storageRef = ref(storage, `${departmentId}/hodphoto`);
+
+    // Upload the file
+    const snapshot = await uploadBytes(storageRef, file);
+
+    // Get the download URL
+    const downloadURL = await getDownloadURL(snapshot.ref);
+    return downloadURL;
+  } catch (error) {
+    console.error("Error uploading HOD photo: ", error);
+    throw error;
+  }
+};
+
+export const getHodMessage = async (departmentId) => {
+  try {
+    const docRef = doc(db, 'department', departmentId, 'hodMessage', '01');
+    const docSnap = await getDoc(docRef);
+    return docSnap.exists() ? { id: docSnap.id, ...docSnap.data() } : null;
+  } catch (error) {
+    console.error("Error fetching HOD message: ", error);
+    throw error;
+  }
+};
+
+export const updateHodMessage = async (departmentId, updatedMessageData) => {
+  try {
+    const docRef = doc(db, 'department', departmentId, 'hodMessage', '01');
+    await updateDoc(docRef, updatedMessageData);
+    console.log("HOD message updated successfully!");
+  } catch (error) {
+    console.error("Error updating HOD message: ", error);
+    throw error;
+  }
+};
+
+export const deleteHodMessage = async (departmentId) => {
+  try {
+    // Note: Deleting the HOD message document might not be a typical use case
+    // as there's usually a HOD message for a department.
+    // Consider if you truly need to delete the document or just update its fields.
+    // If you delete it, fetching it later will return null, and you might need
+    // a way to create a new one.
+    const docRef = doc(db, 'department', departmentId, 'hodMessage', '01');
+    await deleteDoc(docRef);
+    console.log("HOD message deleted successfully!");
+  } catch (error) {
+    console.error("Error deleting HOD message: ", error);
+    throw error;
+  }
+};
+
+
 
 // Functions for Facilities (Labs and Library)
 
