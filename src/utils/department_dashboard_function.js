@@ -117,7 +117,7 @@ export const getCurriculumSemesters = async (departmentId, programId, schemeId) 
 // Function to add a new curriculum subject document and upload PDF
 export const addCurriculumSubject = async (departmentId, programId, schemeId, semesterId, subjectData) => {
   try {
-    const { name, code, credit, elective, file } = subjectData;
+    const { name, code, credit, elective, file, isLab } = subjectData;
 
     // Upload PDF to Firebase Storage
     const storagePath = `${departmentId}/curriculum&Syllabus/${programId}/schemes/${schemeId}/semesters/${semesterId}/subjects/${name}.pdf`;
@@ -133,7 +133,8 @@ export const addCurriculumSubject = async (departmentId, programId, schemeId, se
       credit: credit,
       elective: elective,
       pdfUrl: downloadURL,
-      storagePath: storagePath // Store storage path for easy deletion
+ storagePath: storagePath, // Store storage path for easy deletion
+ isLab: isLab // Include the isLab field
     });
 
     console.log(`Curriculum subject ${name} added successfully to semester ${semesterId}`);
@@ -179,6 +180,73 @@ export const deleteCurriculumSubject = async (departmentId, programId, schemeId,
     throw error;
   }
 };
+
+// Function to add a new curriculum lab document and upload PDF
+export const addCurriculumLab = async (departmentId, programId, schemeId, semesterId, labData) => {
+  try {
+    const { name, code, credit, elective, file } = labData;
+
+    // Upload PDF to Firebase Storage
+    const storagePath = `${departmentId}/curriculum&Syllabus/${programId}/schemes/${schemeId}/semesters/${semesterId}/labs/${name}.pdf`;
+    const storageRef = ref(storage, storagePath);
+    const uploadTask = await uploadBytes(storageRef, file);
+    const downloadURL = await getDownloadURL(uploadTask.ref);
+
+    // Add lab document to Firestore
+    const labDocRef = doc(db, 'department', departmentId, 'curriculumAndSyllabus', programId, 'schemes', schemeId, 'semesters', semesterId, 'labs', name); // Using lab name as document ID
+    await setDoc(labDocRef, {
+      name: name,
+      code: code,
+      credit: credit,
+      elective: elective,
+      pdfUrl: downloadURL,
+      storagePath: storagePath // Store storage path for easy deletion
+    });
+
+    console.log(`Curriculum lab ${name} added successfully to semester ${semesterId}`);
+  } catch (error) {
+    console.error(`Error adding curriculum lab to semester ${semesterId}: `, error);
+    throw error;
+  }
+};
+
+// Function to get all curriculum labs for a semester
+export const getCurriculumLabs = async (departmentId, programId, schemeId, semesterId) => {
+  try {
+    const collectionRef = collection(db, 'department', departmentId, 'curriculumAndSyllabus', programId, 'schemes', schemeId, 'semesters', semesterId, 'labs');
+    const snapshot = await getDocs(collectionRef);
+    const labs = [];
+    snapshot.forEach(doc => {
+      labs.push({
+        id: doc.id,
+        ...doc.data()
+      });
+    });
+    return labs;
+  } catch (error) {
+    console.error("Error fetching curriculum labs: ", error);
+    throw error;
+  }
+};
+
+// Function to delete a curriculum lab document and its PDF
+export const deleteCurriculumLab = async (departmentId, programId, schemeId, semesterId, labId) => {
+  try {
+    const labDocRef = doc(db, 'department', departmentId, 'curriculumAndSyllabus', programId, 'schemes', schemeId, 'semesters', semesterId, 'labs', labId);
+    const labDoc = await getDoc(labDocRef);
+    if (labDoc.exists()) {
+      const data = labDoc.data();
+      const storageRef = ref(storage, data.storagePath);
+      await deleteObject(storageRef); // Delete PDF from storage
+    }
+    await deleteDoc(labDocRef); // Delete lab document
+    console.log(`Curriculum lab ${labId} deleted successfully from semester ${semesterId}`);
+  } catch (error) {
+    console.error(`Error deleting curriculum lab ${labId} from semester ${semesterId}: `, error);
+    throw error;
+  }
+};
+
 
 export const getCurriculumSchemes = async (departmentId, programId) => {
   try {

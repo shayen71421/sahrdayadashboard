@@ -42,7 +42,7 @@ const CurriculumSyllabusPage = () => {
   const [selectedSemesterId, setSelectedSemesterId] = useState<string | null>(null);
   const [subjects, setSubjects] = useState<any[]>([]);
   const [addingSubject, setAddingSubject] = useState(false);
-  const [newSubjectData, setNewSubjectData] = useState({ name: "", code: "", credit: "", elective: false });
+  const [newSubjectData, setNewSubjectData] = useState({ name: "", code: "", credit: "", elective: false, isLab: false });
   const [subjectFile, setSubjectFile] = useState<File | null>(null);
   const [loadingSubjects, setLoadingSubjects] = useState(false);
 
@@ -311,13 +311,13 @@ const CurriculumSyllabusPage = () => {
     setAddingSubject(true);
     try {
       await addCurriculumSubject(
-        departmentId,
+ departmentId,
         selectedProgramId,
         selectedSchemeId,
         selectedSemesterId,
         { ...newSubjectData, file: subjectFile }
-      );
-      setNewSubjectData({ name: "", code: "", credit: "", elective: false });
+ );
+      setNewSubjectData({ name: "", code: "", credit: "", elective: false , isLab: false});
       setSubjectFile(null);
       const subjectList = await getCurriculumSubjects(
         departmentId,
@@ -593,7 +593,11 @@ const CurriculumSyllabusPage = () => {
             <ul className="space-y-2">
               {subjects.map((subject) => (
                 <li key={subject.id} className="flex justify-between items-center p-2 border border-gray-300 rounded-md">
-                  <div>
+                  <div className={`${subject.isLab ? 'text-green-700' : 'text-black'}`}>
+                    {subject.isLab && (
+                      <span className="font-bold mr-2">[LAB]</span>
+                    )}
+
                     <span className="font-semibold">{subject.name} ({subject.code})</span> - {subject.credit} credits {subject.elective && "(Elective)"}
                     {subject.pdfUrl && (
                       <a href={subject.pdfUrl} target="_blank" rel="noopener noreferrer" className="ml-2 text-blue-600 hover:underline text-sm">View Syllabus (PDF)</a>
@@ -651,6 +655,18 @@ const CurriculumSyllabusPage = () => {
                 />
                 <label htmlFor="elective" className="text-gray-700">Elective</label>
               </div>
+ <div className="flex items-center">
+ <input
+ type="checkbox"
+ id="isLab"
+ checked={newSubjectData.isLab}
+ onChange={(e) => setNewSubjectData({ ...newSubjectData, isLab: e.target.checked })}
+ className="mr-2 h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+ disabled={addingSubject}
+ />
+ <label htmlFor="isLab" className="text-gray-700">Is Lab?</label>
+ </div>
+
               <input
                 type="file"
                 accept=".pdf"
