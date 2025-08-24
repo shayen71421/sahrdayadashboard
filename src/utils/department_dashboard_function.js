@@ -41,6 +41,57 @@ export const addCurriculumProgram = async (departmentId, programId, programData)
   }
 };
 
+// Function to add a new curriculum scheme document as a subcollection
+export const addCurriculumScheme = async (departmentId, programId, schemeId, schemeData) => {
+  try {
+    const schemeDocRef = doc(db, 'department', departmentId, 'curriculumAndSyllabus', programId, 'schemes', schemeId); // Create document with schemeId within the 'schemes' collection under programId
+ await setDoc(schemeDocRef, schemeData); // Set the data for the scheme document
+
+    // Now, add the 'semester 1' document as a subcollection under the new scheme document
+ const semester1DocRef = doc(db, 'department', departmentId, 'curriculumAndSyllabus', programId, 'schemes', schemeId, 'semesters', 'semester 1');
+    // You can include some initial data for semester 1 here if needed
+ await setDoc(semester1DocRef, { name: 'Semester 1', description: 'Initial semester data' }); // Example initial data
+
+    console.log(`Curriculum scheme added successfully to program ${programId}`);
+  } catch (error) {
+    console.error(`Error adding curriculum scheme to program ${programId}: `, error);
+    throw error;
+  }
+};
+
+// Function to delete a curriculum scheme document
+export const deleteCurriculumScheme = async (departmentId, programId, schemeId) => {
+  try {
+    const schemeDocRef = doc(db, 'department', departmentId, 'curriculumAndSyllabus', programId, 'schemes', schemeId);
+    await deleteDoc(schemeDocRef);
+    console.log(`Curriculum scheme ${schemeId} deleted successfully from program ${programId}`);
+  } catch (error) {
+    console.error(`Error deleting curriculum scheme ${schemeId} from program ${programId}: `, error);
+    throw error;
+  }
+};
+
+
+
+// Function to get all documents in the curriculum scheme subcollection for a program
+export const getCurriculumSchemes = async (departmentId, programId) => {
+  try {
+    const collectionRef = collection(db, 'department', departmentId, 'curriculumAndSyllabus', programId, 'schemes');
+    const snapshot = await getDocs(collectionRef);
+    const schemes = [];
+    snapshot.forEach(doc => {
+      schemes.push({
+        id: doc.id,
+ ...doc.data()
+      });
+    });
+    return schemes;
+  } catch (error) {
+    console.error("Error fetching curriculum schemes: ", error);
+ throw error;
+  }
+};
+
 // Function to get all document IDs in the curriculumAndSyllabus collection
 export const getCurriculumPrograms = async (departmentId) => {
   try {
