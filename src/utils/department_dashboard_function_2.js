@@ -84,7 +84,7 @@ export const uploadNewsletterPdf = async (file, departmentId, year, newsletterNa
     const storageRef = ref(storage, `${departmentId}/newsLetter/${year}/${newsletterName}.pdf`);
     const uploadTask = uploadBytesResumable(storageRef, file);
     await uploadTask; // Wait for the upload to complete
-    const downloadURL = await getDownloadURL(uploadTask.snapshot.ref)
+    const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
  return { downloadURL, storagePath: storageRef.fullPath }; // Return both URL and path
   } catch (error) {
  console.error(`Error uploading newsletter PDF "${newsletterName}" for year ${year}:`, error);
@@ -126,3 +126,18 @@ export const deleteNewsletterYear = async (departmentId, year) => {
     throw error;
   }
 };
+
+/**
+ * Deletes a specific newsletter event from a year within a department.
+ */
+export const deleteNewsletterEvent = async (departmentId, year, newsletterName) => {
+  try {
+    const newsletterDocRef = doc(db, "department", departmentId, "newsLetter", year, "newsletters", newsletterName);
+    await deleteDoc(newsletterDocRef);
+    console.log(`Deleted newsletter event: ${newsletterName} from year ${year}`);
+  } catch (error) {
+    console.error(`Error deleting newsletter event "${newsletterName}" from year ${year}:`, error);
+    throw error;
+  }
+};
+

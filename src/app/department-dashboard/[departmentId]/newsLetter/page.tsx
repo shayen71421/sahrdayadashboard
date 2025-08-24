@@ -7,7 +7,7 @@ import {
   fetchDepartmentNewsletters,
   addNewsletterYear,
   deleteNewsletterYear,
-  addNewsletterEvent,
+ addNewsletterEvent, deleteNewsletterEvent
 } from "@/utils/department_dashboard_function_2";
 import { format } from "date-fns";
 
@@ -101,6 +101,22 @@ const NewsletterPage = () => {
       console.error("Error adding event:", err);
       setError("Failed to add event.");
     }
+  };
+
+ const handleDeleteEvent = async (year: string, newsletterName: string) => {
+ if (!departmentId) return;
+ const confirmDelete = window.confirm(
+      `Are you sure you want to delete the newsletter event "${newsletterName}" from ${year}?`
+ );
+ if (!confirmDelete) return;
+
+ try {
+ await deleteNewsletterEvent(departmentId, year, newsletterName);
+      await loadNewsletters(); // Reload newsletters after deletion
+ } catch (err) {
+ console.error(`Error deleting event "${newsletterName}" for year ${year}:`, err);
+      setError("Failed to delete event.");
+ }
   };
 
   const handleDeleteYear = async (year: string) => {
@@ -281,10 +297,20 @@ const NewsletterPage = () => {
                       <h3 className="text-lg font-bold text-gray-900 mb-2">
                         {newsletterName}
                       </h3>
+                      <div className="flex items-center justify-between mb-3">
+ <p className="text-gray-600 text-sm">
+ <span className="font-medium">Period:</span>{" "}
+ </p>
+ <button
+                        onClick={() => handleDeleteEvent(year, newsletterName)}
+                        className="px-2 py-0.5 bg-red-100 text-red-700 rounded-md hover:bg-red-200 text-xs"
+ > Delete
+ </button>
+ </div>
+ {/* Display date outside the paragraph to avoid nesting issues */}
                       <p className="text-gray-600 text-sm mb-3">
-                        <span className="font-medium">Period:</span>{" "}
-                        {format(new Date(newsletter.start), "MMM dd, yyyy")} –{" "}
-                        {format(new Date(newsletter.end), "MMM dd, yyyy")}
+ {format(new Date(newsletter.start), "MMM dd, yyyy")} –{" "}
+ {format(new Date(newsletter.end), "MMM dd, yyyy")}
                       </p>
                       <a
                         href={newsletter.pdf}
