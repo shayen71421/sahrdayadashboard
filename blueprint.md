@@ -46,6 +46,20 @@ This blueprint outlines the development plan for the Sahrdaya website, focusing 
 
 ### 3. PEO, PSO, and PO Management
 
+*   **Implement adding new curriculum semesters to a scheme:**
+    *   **Create a `addCurriculumSemester` function:** Define an asynchronous function that takes `departmentId`, `programId`, `schemeId`, `semesterId`, and `semesterData` as arguments. This function will add a document with the specified `semesterId` and `semesterData` to the "semesters" subcollection under the given scheme document.
+    *   Add a UI element (e.g., a form) within the scheme details view in `curriculum-syllabus/page.tsx` to input new semester details and trigger the `addCurriculumSemester` function.
+*   **Implement fetching and displaying semesters for a selected scheme:**
+    *   **Create a `getCurriculumSemesters` function:** Define an asynchronous function that takes `departmentId`, `programId`, and `schemeId` as arguments. This function will fetch all documents from the "semesters" subcollection under the given scheme document.
+    *   Modify the scheme details view in `curriculum-syllabus/page.tsx` to display the fetched semesters.
+*   **Implement deleting semesters from a scheme:**
+    *   **Create a `deleteCurriculumSemester` function:** Define an asynchronous function that takes `departmentId`, `programId`, `schemeId`, and `semesterId` as arguments. This function will delete the document with the specified `semesterId` from the "semesters" subcollection under the given scheme document.
+    *   Add a delete button next to each displayed semester in the scheme details view in `curriculum-syllabus/page.tsx`.
+    *   Implement a handler function for the delete button that confirms the deletion and calls the `deleteCurriculumSemester` function.
+    *   After successful deletion, refetch and display the updated list of semesters for the selected scheme.
+
+### 4. PEO, PSO, and PO Management
+
 *   **Implement fetching and displaying PEOs, PSOs, and POs:**
     *   Fetch the relevant data for PEOs, PSOs, and POs from Firestore in `peo-pso-po/page.tsx`.
     *   Display this data in a clear and organized manner.
@@ -68,6 +82,8 @@ This blueprint outlines the development plan for the Sahrdaya website, focusing 
                         *   `name`: String
                         *   `year`: Number
                         *   `syllabusLink`: String
+                    *   `/semesters` (collection)
+                        *   `[semesterId]` (document)
                         *   `curriculumLink`: String
         *   `/facilities` (collection)
             *   `[facilityId]` (document)
@@ -88,7 +104,7 @@ This blueprint outlines the development plan for the Sahrdaya website, focusing 
 
 ## Next Steps
 
-1.  Create the `addCurriculumScheme` and `getProgramSchemes` functions in the Firebase utility file.
-2.  Modify `curriculum-syllabus/page.tsx` to include UI for selecting programs, displaying schemes, and adding new schemes.
-3.  Implement the data fetching and display logic for facilities (labs and library).
-4.  Implement the data fetching and display logic for PEOs, PSOs, and POs.
+1. Create the `addCurriculumSemester`, `getCurriculumSemesters`, and `deleteCurriculumSemester` functions in the Firebase utility file.
+2. Modify `curriculum-syllabus/page.tsx` to include UI for managing semesters within a selected scheme.
+3. Implement the frontend logic for fetching, adding, and deleting semesters.
+4. Continue with existing steps for Facilities and PEO/PSO/PO management as planned.

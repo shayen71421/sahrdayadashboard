@@ -41,21 +41,40 @@ export const addCurriculumProgram = async (departmentId, programId, programData)
   }
 };
 
+// Function to add a new curriculum semester document
+export const addCurriculumSemester = async (departmentId, programId, schemeId, semesterId, semesterData = {}) => {
+  // semesterData is optional and defaults to an empty object if not provided
+
+  try {
+    const semesterDocRef = doc(db, 'department', departmentId, 'curriculumAndSyllabus', programId, 'schemes', schemeId, 'semesters', semesterId);
+    await setDoc(semesterDocRef, semesterData);
+    console.log(`Curriculum semester ${semesterId} added successfully to scheme ${schemeId}`);
+  } catch (error) {
+    console.error(`Error adding curriculum semester ${semesterId} to scheme ${schemeId}: `, error);
+    throw error;
+  }
+
+  try {
+    // Implicitly create 'lab' and 'subjects' subcollections
+    const labSubcollectionRef = doc(db, 'department', departmentId, 'curriculumAndSyllabus', programId, 'schemes', schemeId, 'semesters', semesterId, 'lab', 'initialized');
+    await setDoc(labSubcollectionRef, { initialized: true });
+
+    const subjectsSubcollectionRef = doc(db, 'department', departmentId, 'curriculumAndSyllabus', programId, 'schemes', schemeId, 'semesters', semesterId, 'subjects', 'initialized');
+    await setDoc(subjectsSubcollectionRef, { initialized: true });
+  } catch (error) {
+    console.error(`Error initializing subcollections for semester ${semesterId}: `, error);
+  }
+};
+
 // Function to add a new curriculum scheme document as a subcollection
 export const addCurriculumScheme = async (departmentId, programId, schemeId, schemeData) => {
   try {
     const schemeDocRef = doc(db, 'department', departmentId, 'curriculumAndSyllabus', programId, 'schemes', schemeId); // Create document with schemeId within the 'schemes' collection under programId
     await setDoc(schemeDocRef, schemeData); // Set the data for the scheme document
 
-    // Now, add the 'semester 1' document as a subcollection under the new scheme document
+    // Now, add the 'semester 1' document under the 'semesters' subcollection of the new scheme document
     const semester1DocRef = doc(db, 'department', departmentId, 'curriculumAndSyllabus', programId, 'schemes', schemeId, 'semesters', 'semester 1');
     await setDoc(semester1DocRef, {}); // Create document without initial data
-
-    // Add 'lab' and 'subjects' subcollections under the 'semester 1' document
-    const labCollectionRef = collection(db, 'department', departmentId, 'curriculumAndSyllabus', programId, 'schemes', schemeId, 'semesters', 'semester 1', 'lab');
-    const subjectsCollectionRef = collection(db, 'department', departmentId, 'curriculumAndSyllabus', programId, 'schemes', schemeId, 'semesters', 'semester 1', 'subjects');
-    await setDoc(doc(labCollectionRef, 'initialLab'), { initialized: true }); // Add a dummy document to 'lab'
-    await setDoc(doc(subjectsCollectionRef, 'initialSubject'), { initialized: true }); // Add a dummy document to 'subjects'
 
     console.log(`Curriculum scheme added successfully to program ${programId}`);
   } catch (error) {
@@ -76,9 +95,26 @@ export const deleteCurriculumScheme = async (departmentId, programId, schemeId) 
   }
 };
 
+// Function to get all documents in the semesters subcollection for a scheme
+export const getCurriculumSemesters = async (departmentId, programId, schemeId) => {
+  try {
+    const collectionRef = collection(db, 'department', departmentId, 'curriculumAndSyllabus', programId, 'schemes', schemeId, 'semesters');
+    const snapshot = await getDocs(collectionRef);
+    const semesters = [];
+    snapshot.forEach(doc => {
+      semesters.push({
+        id: doc.id,
+        ...doc.data()
+      });
+    });
+    return semesters;
+  } catch (error) {
+    console.error("Error fetching curriculum semesters: ", error);
+    throw error;
+  }
+};
 
 
-// Function to get all documents in the curriculum scheme subcollection for a program
 export const getCurriculumSchemes = async (departmentId, programId) => {
   try {
     const collectionRef = collection(db, 'department', departmentId, 'curriculumAndSyllabus', programId, 'schemes');
@@ -97,6 +133,17 @@ export const getCurriculumSchemes = async (departmentId, programId) => {
   }
 };
 
+// Function to delete a curriculum semester document
+export const deleteCurriculumSemester = async (departmentId, programId, schemeId, semesterId) => {
+  try {
+    const semesterDocRef = doc(db, 'department', departmentId, 'curriculumAndSyllabus', programId, 'schemes', schemeId, 'semesters', semesterId);
+    await deleteDoc(semesterDocRef);
+    console.log(`Curriculum semester ${semesterId} deleted successfully from scheme ${schemeId}`);
+  } catch (error) {
+    console.error(`Error deleting curriculum semester ${semesterId} from scheme ${schemeId}: `, error);
+    throw error;
+  }
+};
 // Function to get all document IDs in the curriculumAndSyllabus collection
 export const getCurriculumPrograms = async (departmentId) => {
   try {

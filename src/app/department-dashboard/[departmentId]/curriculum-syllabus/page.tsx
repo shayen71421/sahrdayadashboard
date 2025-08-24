@@ -9,6 +9,9 @@ import {
   getCurriculumSchemes,
   addCurriculumScheme,
   deleteCurriculumScheme,
+  addCurriculumSemester,
+  getCurriculumSemesters,
+  deleteCurriculumSemester,
 } from "@/utils/department_dashboard_function";
 import { DepartmentContext } from "../layout";
 
@@ -28,6 +31,10 @@ const CurriculumSyllabusPage = () => {
   const [addingScheme, setAddingScheme] = useState(false); 
   const [newSchemeData, setNewSchemeData] = useState({ name: "" });
 
+  const [selectedSchemeId, setSelectedSchemeId] = useState<string | null>(null);
+  const [semesters, setSemesters] = useState<any[]>([]);
+  const [addingSemester, setAddingSemester] = useState(false);
+  const [newSemesterData, setNewSemesterData] = useState({ id: "", name: "" });
   useEffect(() => {
     const fetchPrograms = async () => {
       try {
@@ -69,6 +76,27 @@ const CurriculumSyllabusPage = () => {
 
     fetchSchemes();
   }, [departmentId, selectedProgramId]);
+
+  useEffect(() => {
+    const fetchSemesters = async () => {
+      if (!departmentId || !selectedProgramId || !selectedSchemeId) {
+        setSemesters([]);
+        return;
+      }
+      try {
+        const semesterList = await getCurriculumSemesters(
+          departmentId,
+          selectedProgramId,
+          selectedSchemeId
+        );
+        setSemesters(semesterList);
+      } catch (err) {
+        setError("Failed to fetch semesters: " + (err as Error).message);
+        setSemesters([]);
+      }
+    };
+    fetchSemesters();
+  }, [departmentId, selectedProgramId, selectedSchemeId]);
 
   const handleDeleteProgram = async (programId: string) => {
     if (!departmentId) {
@@ -113,12 +141,17 @@ const CurriculumSyllabusPage = () => {
       setError("Department or Program ID not available for adding scheme.");
       return;
     }
-    const schemeId = newSchemeData.name.trim();
+    const schemeId = newSchemeData.name.trim().replace(/\s+/g, "-"); // Use cleaned name as ID
     if (!schemeId) {
       setError("Scheme name cannot be empty.");
       return;
     }
 
+    // Check if a scheme with this ID already exists
+    if (schemes.some((scheme) => scheme.id === schemeId)) {
+      setError(`Scheme with ID "${schemeId}" already exists.`);
+      return;
+    }
     setAddingScheme(true);
     try {
       await addCurriculumScheme(departmentId, selectedProgramId, schemeId, newSchemeData);
@@ -176,8 +209,56 @@ const CurriculumSyllabusPage = () => {
     setSchemes([]); 
   };
 
+  const handleSchemeClick = (schemeId: string) => {
+    setSelectedSchemeId(schemeId);
+    setSemesters([]);
+  };
+
+  const handleAddSemester = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!departmentId || !selectedProgramId || !selectedSchemeId) {
+      setError("Department, Program, or Scheme ID not available for adding semester.");
+      return;
+    }
+    const semesterId = newSemesterData.id.trim().replace(/\s+/g, "-"); // Use cleaned ID
+    if (!semesterId) {
+      setError("Semester ID cannot be empty.");
+      return;
+    }
+
+    // Check if a semester with this ID already exists
+    if (semesters.some((semester) => semester.id === semesterId)) {
+      setError(`Semester with ID "${semesterId}" already exists.`);
+      return;
+    }
+
+    setAddingSemester(true);
+    try {
+      await addCurriculumSemester(
+        departmentId,
+        selectedProgramId,
+        selectedSchemeId,
+        semesterId,
+        newSemesterData
+      );
+      setNewSemesterData({ id: "", name: "" });
+      const semesterList = await getCurriculumSemesters(
+        departmentId,
+        selectedProgramId,
+        selectedSchemeId
+      );
+      setSemesters(semesterList);
+    } catch (err) {
+      setError(`Failed to add semester "${newSemesterData.id}": ` + (err as Error).message);
+    } finally {
+      setAddingSemester(false);
+    }
+  };
+
   if (loading) {
-    return <div className="p-6 text-center text-blue-600 font-bold">Loading curriculum programs...</div>;
+    return (
+      <div className="p-6 text-center text-blue-600 font-bold">Loading curriculum programs...</div>
+    );
   }
 
   if (error) {
@@ -289,6 +370,11 @@ const CurriculumSyllabusPage = () => {
               {schemes.map((scheme, index) => (
                 <li key={index} className="flex justify-between items-center p-2 border border-gray-300 rounded-md">
                   <span>{scheme.name}</span>
+                  <button onClick={() => handleSchemeClick(scheme.id)}
+                   className={`px-3 py-1 text-sm font-semibold rounded text-white ${selectedSchemeId === scheme.id ? "bg-blue-700" : "bg-blue-600 hover:bg-blue-700"}`}
+>
+  {selectedSchemeId === scheme.id ? "Selected" : "Select"}
+</button>
                   <button
                     onClick={() => handleDeleteScheme(scheme.id)}
                     className="ml-4 px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700"
@@ -305,7 +391,7 @@ const CurriculumSyllabusPage = () => {
           {/* Add Scheme Form */}
           <div className="mt-6">
             <h3 className="text-lg font-semibold mb-2 text-blue-900">Add New Scheme</h3>
-            <form onSubmit={handleAddScheme} className="flex flex-col gap-3">
+            <form onSubmit={handleAddScheme} className="flex items-center gap-3">
               <input
                 type="text"
                 placeholder="Scheme Name (e.g., 2025 - KTU)"
@@ -327,8 +413,71 @@ const CurriculumSyllabusPage = () => {
           </div>
         </div>
       )}
+
+      {/* Semesters Section */}
+      {selectedProgramId && selectedSchemeId && (
+        <div className="mt-8">
+          <h2 className="text-xl font-semibold mb-4 text-blue-900">
+            Semesters for {selectedSchemeId.toUpperCase()}
+          </h2>
+          {semesters.length > 0 ? (
+            <ul className="space-y-2">
+              {semesters.map((semester, index) => (
+                <li key={index} className="flex justify-between items-center p-2 border border-gray-300 rounded-md">
+                  <span>{semester.name || semester.id}</span>
+                  <button
+                    onClick={async () => {
+                      if (window.confirm(`Are you sure you want to delete semester "${semester.id}"?`)) {
+                        try {
+                          await deleteCurriculumSemester(
+                            departmentId,
+                            selectedProgramId,
+                            selectedSchemeId,
+                            semester.id
+                          );
+                          const semesterList = await getCurriculumSemesters(
+                            departmentId,
+                            selectedProgramId,
+                            selectedSchemeId
+                          );
+                          setSemesters(semesterList);
+                        } catch (err) {
+                          setError(`Failed to delete semester ${semester.id}: ` + (err as Error).message);
+                        }
+                      }
+                    }}
+                    className="ml-4 px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700"
+                  >
+                    Delete
+                  </button>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-gray-600">No semesters found for this scheme.</p>
+          )}
+
+          {/* Add Semester Form */}
+          <div className="mt-6">
+            <h3 className="text-lg font-semibold mb-2 text-blue-900">Add New Semester</h3>
+ <form onSubmit={handleAddSemester} className="flex items-center gap-3">
+ <input
+ type="text"
+ placeholder="Semester ID (e.g., semester-2)"
+ value={newSemesterData.id}
+ onChange={(e) => setNewSemesterData({ ...newSemesterData, id: e.target.value })}
+ className="flex-grow px-3 py-2 border border-gray-400 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+ disabled={addingSemester}
+ />
+ <button type="submit" className={`px-4 py-2 font-semibold rounded-md text-white transition ${
+ addingSemester ? "bg-gray-400" : "bg-blue-600 hover:bg-blue-700"}`} disabled={addingSemester}>
+ {addingSemester ? "Adding..." : "Add Semester"}
+ </button>
+ </form>
+          </div>
+        </div>
+ )}
     </div>
   );
 };
-
 export default CurriculumSyllabusPage;
