@@ -45,12 +45,17 @@ export const addCurriculumProgram = async (departmentId, programId, programData)
 export const addCurriculumScheme = async (departmentId, programId, schemeId, schemeData) => {
   try {
     const schemeDocRef = doc(db, 'department', departmentId, 'curriculumAndSyllabus', programId, 'schemes', schemeId); // Create document with schemeId within the 'schemes' collection under programId
- await setDoc(schemeDocRef, schemeData); // Set the data for the scheme document
+    await setDoc(schemeDocRef, schemeData); // Set the data for the scheme document
 
     // Now, add the 'semester 1' document as a subcollection under the new scheme document
- const semester1DocRef = doc(db, 'department', departmentId, 'curriculumAndSyllabus', programId, 'schemes', schemeId, 'semesters', 'semester 1');
-    // You can include some initial data for semester 1 here if needed
- await setDoc(semester1DocRef, { name: 'Semester 1', description: 'Initial semester data' }); // Example initial data
+    const semester1DocRef = doc(db, 'department', departmentId, 'curriculumAndSyllabus', programId, 'schemes', schemeId, 'semesters', 'semester 1');
+    await setDoc(semester1DocRef, {}); // Create document without initial data
+
+    // Add 'lab' and 'subjects' subcollections under the 'semester 1' document
+    const labCollectionRef = collection(db, 'department', departmentId, 'curriculumAndSyllabus', programId, 'schemes', schemeId, 'semesters', 'semester 1', 'lab');
+    const subjectsCollectionRef = collection(db, 'department', departmentId, 'curriculumAndSyllabus', programId, 'schemes', schemeId, 'semesters', 'semester 1', 'subjects');
+    await setDoc(doc(labCollectionRef, 'initialLab'), { initialized: true }); // Add a dummy document to 'lab'
+    await setDoc(doc(subjectsCollectionRef, 'initialSubject'), { initialized: true }); // Add a dummy document to 'subjects'
 
     console.log(`Curriculum scheme added successfully to program ${programId}`);
   } catch (error) {
