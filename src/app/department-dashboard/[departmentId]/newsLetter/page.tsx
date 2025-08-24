@@ -32,8 +32,8 @@ const NewsletterPage = () => {
   const [error, setError] = useState<string | null>(null);
   const [newYear, setNewYear] = useState("");
   const [newEventName, setNewEventName] = useState("");
-  const [newEventStart, setNewEventStart] = useState("");
-  const [newEventEnd, setNewEventEnd] = useState("");
+  const [newEventStart, setNewEventStart] = useState(""); // store YYYY-MM-DD
+  const [newEventEnd, setNewEventEnd] = useState(""); // store YYYY-MM-DD
   const [newEventPdfFile, setNewEventPdfFile] = useState<File | null>(null);
 
   const loadNewsletters = async () => {
@@ -83,27 +83,23 @@ const NewsletterPage = () => {
     )
       return;
 
-    // Basic date format validation (MM/DD/YYYY)
-    const dateRegex = /^\d{2}\/\d{2}\/\d{4}$/;
-    if (!dateRegex.test(newEventStart) || !dateRegex.test(newEventEnd)) {
-      setError("Please use MM/DD/YYYY format for dates.");
-      return;
-    }
-
     try {
       await addNewsletterEvent(
         departmentId,
         newYear,
         newEventName,
-        newEventStart,
-        newEventEnd,
-        newEventPdfFile // Pass the file object
+        format(new Date(newEventStart), "MM/dd/yyyy"), // convert for backend
+        format(new Date(newEventEnd), "MM/dd/yyyy"),
+        newEventPdfFile
       );
       setNewEventName("");
+      setNewEventStart("");
+      setNewEventEnd("");
       setNewEventPdfFile(null);
       await loadNewsletters();
     } catch (err) {
       console.error("Error adding event:", err);
+      setError("Failed to add event.");
     }
   };
 
@@ -141,77 +137,123 @@ const NewsletterPage = () => {
 
       {/* Add Newsletter Event Form */}
       <div className="bg-white shadow rounded-lg p-6 mb-8">
-        <h2 className="text-2xl font-semibold text-blue-800 mb-4">Add New Newsletter Event</h2>
-        <form onSubmit={handleAddEvent} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <h2 className="text-2xl font-semibold text-blue-800 mb-4">
+          Add New Newsletter Event
+        </h2>
+        <form
+          onSubmit={handleAddEvent}
+          className="grid grid-cols-1 md:grid-cols-2 gap-4"
+        >
           <div>
-            <label htmlFor="eventYear" className="block text-sm font-medium text-gray-700">Year</label>
+            <label
+              htmlFor="eventYear"
+              className="block text-sm font-medium text-gray-700"
+            >
+              Year
+            </label>
             <select
               id="eventYear"
               value={newYear}
               onChange={(e) => setNewYear(e.target.value)}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm text-black-input"
             >
               <option value="">Select Year</option>
-              {newsletters && Object.keys(newsletters).sort((a, b) => b.localeCompare(a)).map((year) => (
-                <option key={year} value={year}>{year}</option>
-              ))}
+              {newsletters &&
+                Object.keys(newsletters)
+                  .sort((a, b) => b.localeCompare(a))
+                  .map((year) => (
+                    <option key={year} value={year}>
+                      {year}
+                    </option>
+                  ))}
             </select>
           </div>
           <div>
-            <label htmlFor="eventName" className="block text-sm font-medium text-gray-700">Newsletter Name</label>
-            <input type="text" id="eventName" value={newEventName} onChange={(e) => setNewEventName(e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"/>
+            <label
+              htmlFor="eventName"
+              className="block text-sm font-medium text-gray-700"
+            >
+              Newsletter Name
+            </label>
+            <input
+              type="text"
+              id="eventName"
+              value={newEventName}
+              onChange={(e) => setNewEventName(e.target.value)}
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm text-black-input"
+            />
           </div>
-         
-<div>
-  <label htmlFor="eventStart" className="block text-sm font-medium text-gray-700">Start Date</label>
-  <input
-    type="date"
-    id="eventStart" // Change type to date
-    value={newEventStart} // Keep value in YYYY-MM-DD for date picker
-    onChange={(e) => {
-      const selectedDate = e.target.value;
-      if (selectedDate) {
-        setNewEventStart(format(new Date(selectedDate), 'MM/dd/yyyy')); // Format to MM/DD/YYYY for state
-      }
-    }}
-    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-  />
-</div>
-<div>
-  <label htmlFor="eventEnd" className="block text-sm font-medium text-gray-700">End Date</label>
-  <input
-    type="date"
-    id="eventEnd" // Change type to date
-    value={newEventEnd} // Keep value in YYYY-MM-DD for date picker
-    onChange={(e) => {
-      const selectedDate = e.target.value;
-      if (selectedDate) {
-        setNewEventEnd(format(new Date(selectedDate), 'MM/dd/yyyy')); // Format to MM/DD/YYYY for state
-      }
-    }}
-    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-  />
-</div>
+
+          <div>
+            <label
+              htmlFor="eventStart"
+              className="block text-sm font-medium text-gray-700"
+            >
+              Start Date
+            </label>
+            <input
+              type="date"
+              id="eventStart"
+              value={newEventStart}
+              onChange={(e) => setNewEventStart(e.target.value)} // store YYYY-MM-DD
+    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm text-black-input"
+            />
+          </div>
+
+          <div>
+            <label
+              htmlFor="eventEnd"
+              className="block text-sm font-medium text-gray-700"
+            >
+              End Date
+            </label>
+            <input
+              type="date"
+              id="eventEnd"
+              value={newEventEnd}
+              onChange={(e) => setNewEventEnd(e.target.value)} // store YYYY-MM-DD
+    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm text-black-input"
+            />
+          </div>
 
           <div className="col-span-1 md:col-span-2">
-            <label htmlFor="eventPdf" className="block text-sm font-medium text-gray-700">PDF Link</label>
+            <label
+              htmlFor="eventPdf"
+              className="block text-sm font-medium text-gray-700"
+            >
+              PDF File
+            </label>
             <input
-              type="file" // Change type to file
+              type="file"
               id="eventPdf"
-              accept=".pdf" // Accept only PDF files
-              onChange={(e) => setNewEventPdfFile(e.target.files ? e.target.files[0] : null)} // Capture file
+              accept=".pdf"
+              onChange={(e) =>
+                setNewEventPdfFile(e.target.files ? e.target.files[0] : null)
+              } 
               className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
             />
           </div>
+
           <div className="col-span-1 md:col-span-2 flex justify-end">
-            <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition">Add Newsletter Event</button>
+            <button
+              type="submit"
+              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition"
+            >
+              Add Newsletter Event
+            </button>
           </div>
         </form>
       </div>
 
-        {/* Add Year Form */}
+      {/* Add CSS for black text in inputs */}
+      <style jsx>{`
+        .text-black-input { color: #000 !important; }
+      `}</style>
+      {/* Add Year Form */}
       {(!newsletters || Object.keys(newsletters).length === 0) && (
-        <p className="text-gray-600">No newsletters found for this department.</p>
+        <p className="text-gray-600">
+          No newsletters found for this department.
+        </p>
       )}
 
       {newsletters &&
@@ -229,29 +271,32 @@ const NewsletterPage = () => {
                 </button>
               </div>
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {Object.keys(newsletters[year]).map((newsletterName) => (
-                  <div
-                    key={newsletterName}
-                    className="bg-white rounded-xl shadow-md p-5 hover:shadow-lg transition"
-                  >
-                    <h3 className="text-lg font-bold text-gray-900 mb-2">
-                      {newsletterName}
-                    </h3>
-                    <p className="text-gray-600 text-sm mb-3">
-                      <span className="font-medium">Period:</span>{" "}
-                      {newsletters[year][newsletterName].start} –{" "}
-                      {newsletters[year][newsletterName].end}
-                    </p>
-                    <a
-                      href={newsletters[year][newsletterName].pdf}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-block text-sm px-3 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                {Object.keys(newsletters[year]).map((newsletterName) => {
+                  const newsletter = newsletters[year][newsletterName];
+                  return (
+                    <div
+                      key={newsletterName}
+                      className="bg-white rounded-xl shadow-md p-5 hover:shadow-lg transition"
                     >
-                      View PDF
-                    </a>
-                  </div>
-                ))}
+                      <h3 className="text-lg font-bold text-gray-900 mb-2">
+                        {newsletterName}
+                      </h3>
+                      <p className="text-gray-600 text-sm mb-3">
+                        <span className="font-medium">Period:</span>{" "}
+                        {format(new Date(newsletter.start), "MMM dd, yyyy")} –{" "}
+                        {format(new Date(newsletter.end), "MMM dd, yyyy")}
+                      </p>
+                      <a
+                        href={newsletter.pdf}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-block text-sm px-3 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                      >
+                        View PDF
+                      </a>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           ))}
