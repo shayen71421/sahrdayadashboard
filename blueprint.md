@@ -50,11 +50,13 @@ This blueprint outlines the development plan for the Sahrdaya website, focusing 
     *   Implement a handler function for the delete button that confirms the deletion and calls the `deleteCurriculumSemester` function.
     *   After successful deletion, refetch and display the updated list of semesters for the selected scheme.
 
-*   **Fix nested button HTML error:**
-    *   Modify the semester list rendering in `src/app/department-dashboard/[departmentId]/curriculum-syllabus/page.tsx` to restructure the HTML and avoid nesting a button inside another button. This will likely involve using a `span` or `div` to wrap the semester name and placing the delete button as a sibling within the list item.
-    *   Fix the syntax error in `src/app/department-dashboard/[departmentId]/curriculum-syllabus/page.tsx` at line 525 by adding the missing closing `</button>` tag for the semester delete button.
-
 *   **Implement adding new curriculum subjects to a semester:**
+    *   **Fix nested button HTML error:**
+        *   Modify the semester list rendering in `src/app/department-dashboard/[departmentId]/curriculum-syllabus/page.tsx` to restructure the HTML and avoid nesting a button inside another button. This will likely involve using a `span` or `div` to wrap the semester name and placing the delete button as a sibling within the list item.
+        *   Fix the syntax error in `src/app/department-dashboard/[departmentId]/curriculum-syllabus/page.tsx` at line 525 by adding the missing closing `</button>` tag for the semester delete button.
+    *   **Fix duplicate import of `deleteObject`:** Remove the redundant import statement for `deleteObject` from `src/utils/department_dashboard_function.js`.
+    *   **Fix `ReferenceError: deleteObject is not defined`:** Add an import statement for `deleteObject` from the Firebase Storage SDK in `src/utils/department_dashboard_function.js` to resolve the error when deleting subjects with associated PDF files.
+    *   **Fix `ReferenceError: ref is not defined`:** Add an import statement for `ref` from the Firebase Storage SDK in `src/utils/department_dashboard_function.js` to resolve the error when creating a storage reference for deleting subjects.
     *   **Create a `addCurriculumSubject` function:** Define an asynchronous function in `src/utils/department_dashboard_function.js` that takes `departmentId`, `programId`, `schemeId`, `semesterId`, and `subjectData` (including name, code, credit, elective status, and PDF file) as arguments.
     *   This function will handle uploading the subject's PDF file to Firebase Storage with a structured name (e.g., `gs://college-website-27cf1.firebasestorage.app/[departmentId]/curriculum&Syllabus/[programId]/schemes/[schemeId]/semesters/[semesterId]/subjects/[subject-name].pdf`).
     *   After successful upload, it will add a new document to the "subjects" subcollection under the specified semester document, including the subject details and the downloaded URL of the uploaded PDF.
@@ -67,7 +69,7 @@ This blueprint outlines the development plan for the Sahrdaya website, focusing 
     *   **Create a `deleteCurriculumSubject` function:** Define an asynchronous function in `src/utils/department_dashboard_function.js` that takes `departmentId`, `programId`, `schemeId`, `semesterId`, and `subjectId` as arguments.
     *   This function will first delete the corresponding PDF file from Firebase Storage using the stored download URL or file path.
     *   Then, it will delete the subject document from the "subjects" subcollection.
-    *   Add a delete button next to each displayed subject in the semester details view in `curriculum-syllabus/page.tsx`.
+    *   Add a delete button next to each displayed subject in the semester details view in `src/app/department-dashboard/[departmentId]/curriculum-syllabus/page.tsx`.
     *   Implement a handler function for the delete button that confirms the deletion and calls the `deleteCurriculumSubject` function.
     *   After successful deletion, refetch and display the updated list of subjects for the selected semester.
 

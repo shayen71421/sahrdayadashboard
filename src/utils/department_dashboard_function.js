@@ -1,6 +1,6 @@
 import { db, storage } from "./firebase.js";
 import { doc, getDoc, updateDoc, arrayUnion, arrayRemove, collection, getDocs , deleteDoc, setDoc, deleteField, query, where  } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
 
 export const fetchPoPsoPeo = async (departmentId, programId) => {
   try {
