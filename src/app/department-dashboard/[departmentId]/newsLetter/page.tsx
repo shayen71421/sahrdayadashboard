@@ -6,7 +6,7 @@ import {
   fetchDepartmentNewsletters,
   addNewsletterYear,
   deleteNewsletterYear,
-} from "@/utils/department_dashboard_function_2";
+} from "@/utils/department_dashboard_function";
 
 interface Newsletter {
   start: string;
