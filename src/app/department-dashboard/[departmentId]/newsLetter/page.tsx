@@ -8,7 +8,7 @@ import {
   addNewsletterYear,
   deleteNewsletterYear,
  addNewsletterEvent, deleteNewsletterEvent
-} from "@/utils/department_dashboard_function_2";
+} from "@/utils/department_dashboard_function";
 import { format } from "date-fns";
 
 interface Newsletter {
@@ -151,6 +151,29 @@ const NewsletterPage = () => {
         </h1>
       </div>
 
+      {/* Add Year Form */}
+      <div className="bg-white shadow rounded-lg p-6 mb-8">
+        <h2 className="text-2xl font-semibold text-blue-800 mb-4">Add New Newsletter Year</h2>
+        <form
+          onSubmit={handleAddYear}
+          className="flex items-center space-x-3"
+        >
+          <input
+            type="text"
+            value={newYear}
+            onChange={(e) => setNewYear(e.target.value)}
+            placeholder="e.g. 2023-24"
+            className="rounded-md border border-gray-300 px-3 py-1 text-sm text-gray-900 placeholder-gray-400 focus:ring-blue-500 focus:border-blue-500 text-black-input"
+          />
+          <button
+            type="submit"
+            className="px-4 py-1 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 transition"
+          >
+            + Add Year
+          </button>
+        </form>
+      </div>
+
       {/* Add Newsletter Event Form */}
       <div className="bg-white shadow rounded-lg p-6 mb-8">
         <h2 className="text-2xl font-semibold text-blue-800 mb-4">
@@ -266,11 +289,6 @@ const NewsletterPage = () => {
         .text-black-input { color: #000 !important; }
       `}</style>
       {/* Add Year Form */}
-      {(!newsletters || Object.keys(newsletters).length === 0) && (
-        <p className="text-gray-600">
-          No newsletters found for this department.
-        </p>
-      )}
 
       {newsletters &&
         Object.keys(newsletters)
@@ -297,21 +315,6 @@ const NewsletterPage = () => {
                       <h3 className="text-lg font-bold text-gray-900 mb-2">
                         {newsletterName}
                       </h3>
-                      <div className="flex items-center justify-between mb-3">
- <p className="text-gray-600 text-sm">
- <span className="font-medium">Period:</span>{" "}
- </p>
- <button
-                        onClick={() => handleDeleteEvent(year, newsletterName)}
-                        className="px-2 py-0.5 bg-red-100 text-red-700 rounded-md hover:bg-red-200 text-xs"
- > Delete
- </button>
- </div>
- {/* Display date outside the paragraph to avoid nesting issues */}
-                      <p className="text-gray-600 text-sm mb-3">
- {format(new Date(newsletter.start), "MMM dd, yyyy")} –{" "}
- {format(new Date(newsletter.end), "MMM dd, yyyy")}
-                      </p>
                       <a
                         href={newsletter.pdf}
                         target="_blank"
@@ -320,6 +323,17 @@ const NewsletterPage = () => {
                       >
                         View PDF
                       </a>
+                      <div className="flex items-center justify-between mt-3">
+                        <p className="text-gray-600 text-sm">
+                          <span className="font-medium">Period:</span>{" "}
+                          {format(new Date(newsletter.start), "MMM dd, yyyy")} –{" "}
+                          {format(new Date(newsletter.end), "MMM dd, yyyy")}
+                        </p>
+                        <button
+                          onClick={() => handleDeleteEvent(year, newsletterName)}
+                          className="px-2 py-0.5 bg-red-100 text-red-700 rounded-md hover:bg-red-200 text-xs"
+                        > Delete </button>
+                      </div>
                     </div>
                   );
                 })}
@@ -329,5 +343,6 @@ const NewsletterPage = () => {
     </div>
   );
 };
+
 
 export default NewsletterPage;

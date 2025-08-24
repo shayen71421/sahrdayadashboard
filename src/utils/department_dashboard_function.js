@@ -857,6 +857,49 @@ export const addNewsletterYear = async (departmentId, year) => {
 };
 
 /**
+ * Adds a new newsletter event to a specific year within a department.
+ */
+export const addNewsletterEvent = async (departmentId, year, newsletterName, start, end, pdfFile) => {
+  if (!pdfFile) {
+    console.error("PDF file is required to add a newsletter event.");
+    throw new Error("PDF file is required.");
+  }
+
+  try {
+    // Upload PDF first
+    const { downloadURL, storagePath } = await uploadNewsletterPdf(pdfFile, departmentId, year, newsletterName);
+
+    // Then add newsletter event to Firestore
+    const newsletterDocRef = doc(db, "department", departmentId, "newsLetter", year, "newsletters", newsletterName);
+    await setDoc(newsletterDocRef, {
+      start: start,
+      end: end,
+      pdf: downloadURL, // Store the download URL in Firestore
+      storagePath: storagePath // Optionally store the storage path
+    });
+  } catch (error) {
+    console.error(`Error adding newsletter event "${newsletterName}" for year ${year}:`, error);
+    throw error;
+  }
+};
+
+/**
+ * Uploads a newsletter PDF to Firebase Storage.
+ */
+export const uploadNewsletterPdf = async (file, departmentId, year, newsletterName) => {
+  try {
+    const storageRef = ref(storage, `${departmentId}/newsLetter/${year}/${newsletterName}.pdf`);
+    const uploadTask = uploadBytesResumable(storageRef, file);
+    await uploadTask; // Wait for the upload to complete
+    const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+ return { downloadURL, storagePath: storageRef.fullPath }; // Return both URL and path
+  } catch (error) {
+ console.error(`Error uploading newsletter PDF "${newsletterName}" for year ${year}:`, error);
+ throw error; // Re-throw the error to be caught by the calling function
+  }
+};
+
+/**
  * Fetches newsletters for a specific year within a department.
  */
 export const fetchDepartmentNewslettersByYear = async (departmentId, year) => {
@@ -890,3 +933,18 @@ export const deleteNewsletterYear = async (departmentId, year) => {
     throw error;
   }
 };
+
+/**
+ * Deletes a specific newsletter event from a year within a department.
+ */
+export const deleteNewsletterEvent = async (departmentId, year, newsletterName) => {
+  try {
+    const newsletterDocRef = doc(db, "department", departmentId, "newsLetter", year, "newsletters", newsletterName);
+    await deleteDoc(newsletterDocRef);
+    console.log(`Deleted newsletter event: ${newsletterName} from year ${year}`);
+  } catch (error) {
+    console.error(`Error deleting newsletter event "${newsletterName}" from year ${year}:`, error);
+    throw error;
+  }
+};
+
