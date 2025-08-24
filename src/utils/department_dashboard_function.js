@@ -55,11 +55,8 @@ export const addCurriculumSemester = async (departmentId, programId, schemeId, s
   }
 
   try {
-    // Implicitly create 'lab' and 'subjects' subcollections
-    const labSubcollectionRef = doc(db, 'department', departmentId, 'curriculumAndSyllabus', programId, 'schemes', schemeId, 'semesters', semesterId, 'lab', 'initialized');
-    await setDoc(labSubcollectionRef, { initialized: true });
-
-    const subjectsSubcollectionRef = doc(db, 'department', departmentId, 'curriculumAndSyllabus', programId, 'schemes', schemeId, 'semesters', semesterId, 'subjects', 'initialized');
+    // Implicitly create 'subjects' subcollection
+    const subjectsSubcollectionRef = doc(db, 'department', departmentId, 'curriculumAndSyllabus', programId, 'schemes', schemeId, 'semesters', semesterId, 'subjects', 'initialized'); // Create a dummy doc to ensure the collection exists
     await setDoc(subjectsSubcollectionRef, { initialized: true });
   } catch (error) {
     console.error(`Error initializing subcollections for semester ${semesterId}: `, error);
