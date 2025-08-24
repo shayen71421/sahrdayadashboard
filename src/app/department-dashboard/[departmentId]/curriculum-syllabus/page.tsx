@@ -10,6 +10,9 @@ import {
   addCurriculumScheme,
   deleteCurriculumScheme,
   addCurriculumSemester,
+ addCurriculumSubject,
+ getCurriculumSubjects,
+ deleteCurriculumSubject,
   getCurriculumSemesters,
   deleteCurriculumSemester,
 } from "@/utils/department_dashboard_function";
@@ -35,6 +38,14 @@ const CurriculumSyllabusPage = () => {
   const [semesters, setSemesters] = useState<any[]>([]);
   const [addingSemester, setAddingSemester] = useState(false);
   const [newSemesterData, setNewSemesterData] = useState({ id: "", name: "" });
+
+  const [selectedSemesterId, setSelectedSemesterId] = useState<string | null>(null);
+  const [subjects, setSubjects] = useState<any[]>([]);
+  const [addingSubject, setAddingSubject] = useState(false);
+  const [newSubjectData, setNewSubjectData] = useState({ name: "", code: "", credit: "", elective: false });
+  const [subjectFile, setSubjectFile] = useState<File | null>(null);
+  const [loadingSubjects, setLoadingSubjects] = useState(false);
+
   useEffect(() => {
     const fetchPrograms = async () => {
       try {
@@ -97,6 +108,31 @@ const CurriculumSyllabusPage = () => {
     };
     fetchSemesters();
   }, [departmentId, selectedProgramId, selectedSchemeId]);
+
+  useEffect(() => {
+    const fetchSubjects = async () => {
+      if (!departmentId || !selectedProgramId || !selectedSchemeId || !selectedSemesterId) {
+        setSubjects([]);
+        return;
+      }
+      setLoadingSubjects(true);
+      try {
+        const subjectList = await getCurriculumSubjects(
+          departmentId,
+          selectedProgramId,
+          selectedSchemeId,
+          selectedSemesterId
+        );
+        setSubjects(subjectList);
+      } catch (err) {
+        setError("Failed to fetch subjects: " + (err as Error).message);
+        setSubjects([]);
+      } finally {
+        setLoadingSubjects(false);
+      }
+    };
+    fetchSubjects();
+  }, [departmentId, selectedProgramId, selectedSchemeId, selectedSemesterId]);
 
   const handleDeleteProgram = async (programId: string) => {
     if (!departmentId) {
@@ -212,6 +248,7 @@ const CurriculumSyllabusPage = () => {
   const handleSchemeClick = (schemeId: string) => {
     setSelectedSchemeId(schemeId);
     setSemesters([]);
+ setSelectedSemesterId(null); // Reset selected semester when scheme changes
   };
 
   const handleAddSemester = async (e: React.FormEvent) => {
@@ -252,6 +289,74 @@ const CurriculumSyllabusPage = () => {
       setError(`Failed to add semester "${newSemesterData.id}": ` + (err as Error).message);
     } finally {
       setAddingSemester(false);
+    }
+  };
+
+  const handleSemesterClick = (semesterId: string) => {
+    setSelectedSemesterId(semesterId);
+    setSubjects([]); // Reset subjects when semester changes
+  };
+
+  const handleAddSubject = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!departmentId || !selectedProgramId || !selectedSchemeId || !selectedSemesterId) {
+      setError("Department, Program, Scheme, or Semester ID not available for adding subject.");
+      return;
+    }
+    if (!newSubjectData.name || !newSubjectData.code || !newSubjectData.credit || !subjectFile) {
+      setError("Subject name, code, credit, and file are required.");
+      return;
+    }
+
+    setAddingSubject(true);
+    try {
+      await addCurriculumSubject(
+        departmentId,
+        selectedProgramId,
+        selectedSchemeId,
+        selectedSemesterId,
+        { ...newSubjectData, file: subjectFile }
+      );
+      setNewSubjectData({ name: "", code: "", credit: "", elective: false });
+      setSubjectFile(null);
+      const subjectList = await getCurriculumSubjects(
+        departmentId,
+        selectedProgramId,
+        selectedSchemeId,
+        selectedSemesterId
+      );
+      setSubjects(subjectList);
+    } catch (err) {
+      setError(`Failed to add subject "${newSubjectData.name}": ` + (err as Error).message);
+    } finally {
+      setAddingSubject(false);
+    }
+  };
+
+  const handleDeleteSubject = async (subjectId: string) => {
+    if (!departmentId || !selectedProgramId || !selectedSchemeId || !selectedSemesterId) {
+      setError("Department, Program, Scheme, or Semester ID not available for deletion.");
+      return;
+    }
+    if (window.confirm(`Are you sure you want to delete this subject?`)) {
+      try {
+        await deleteCurriculumSubject(
+          departmentId,
+          selectedProgramId,
+          selectedSchemeId,
+          selectedSemesterId,
+          subjectId
+        );
+        const subjectList = await getCurriculumSubjects(
+          departmentId,
+          selectedProgramId,
+          selectedSchemeId,
+          selectedSemesterId
+        );
+        setSubjects(subjectList);
+      } catch (err) {
+        setError("Failed to delete subject: " + (err as Error).message);
+      }
     }
   };
 
@@ -323,7 +428,7 @@ const CurriculumSyllabusPage = () => {
               )}
 
               <div className="flex space-x-2">
-                {editingId !== programId && (
+                {editingId !== programId && selectedProgramId !== programId && (
                   <>
                     <button
                       onClick={() => handleEditProgram(programId)}
@@ -336,16 +441,6 @@ const CurriculumSyllabusPage = () => {
                       className="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700"
                     >
                       Delete
-                    </button>
-                    <button
-                      onClick={() => handleProgramClick(programId)}
-                      className={`px-3 py-1 text-sm font-semibold rounded text-white ${
-                        selectedProgramId === programId
-                          ? "bg-blue-700"
-                          : "bg-blue-600 hover:bg-blue-700"
-                      }`}
-                    >
-                      {selectedProgramId === programId ? "Selected" : "Select"}
                     </button>
                   </>
                 )}
@@ -368,11 +463,14 @@ const CurriculumSyllabusPage = () => {
           ) : schemes.length > 0 ? (
             <ul className="space-y-2">
               {schemes.map((scheme, index) => (
-                <li key={index} className="flex justify-between items-center p-2 border border-gray-300 rounded-md">
+                <li key={scheme.id} className="flex justify-between items-center p-2 border border-gray-300 rounded-md">
                   <span>{scheme.name}</span>
-                  <button onClick={() => handleSchemeClick(scheme.id)}
-                   className={`px-3 py-1 text-sm font-semibold rounded text-white ${selectedSchemeId === scheme.id ? "bg-blue-700" : "bg-blue-600 hover:bg-blue-700"}`}
->
+                  <button
+                    onClick={() => handleSchemeClick(scheme.id)}
+                    className={`px-3 py-1 text-sm font-semibold rounded text-white ${
+                      selectedSchemeId === scheme.id ? "bg-blue-700" : "bg-blue-600 hover:bg-blue-700"
+                    }`}
+                  >
   {selectedSchemeId === scheme.id ? "Selected" : "Select"}
 </button>
                   <button
@@ -422,8 +520,14 @@ const CurriculumSyllabusPage = () => {
           </h2>
           {semesters.length > 0 ? (
             <ul className="space-y-2">
-              {semesters.map((semester, index) => (
-                <li key={index} className="flex justify-between items-center p-2 border border-gray-300 rounded-md">
+              {semesters.map((semester) => (
+                <li key={semester.id} className="flex justify-between items-center p-2 border border-gray-300 rounded-md">
+                  <button
+                    onClick={() => handleSemesterClick(semester.id)}
+                    className={`font-medium ${
+                      selectedSemesterId === semester.id ? "text-blue-600 underline" : "text-black hover:underline"
+                    }`}
+                  >
                   <span>{semester.name || semester.id}</span>
                   <button
                     onClick={async () => {
@@ -449,6 +553,7 @@ const CurriculumSyllabusPage = () => {
                     className="ml-4 px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700"
                   >
                     Delete
+                  </button>
                   </button>
                 </li>
               ))}
@@ -477,6 +582,97 @@ const CurriculumSyllabusPage = () => {
           </div>
         </div>
  )}
+
+      {/* Subjects Section */}
+      {selectedProgramId && selectedSchemeId && selectedSemesterId && (
+        <div className="mt-8">
+          <h2 className="text-xl font-semibold mb-4 text-blue-900">
+            Subjects for {selectedSemesterId.toUpperCase()}
+          </h2>
+          {loadingSubjects ? (
+            <div className="text-blue-600">Loading subjects...</div>
+          ) : subjects.length > 0 ? (
+            <ul className="space-y-2">
+              {subjects.map((subject) => (
+                <li key={subject.id} className="flex justify-between items-center p-2 border border-gray-300 rounded-md">
+                  <div>
+                    <span className="font-semibold">{subject.name} ({subject.code})</span> - {subject.credit} credits {subject.elective && "(Elective)"}
+                    {subject.pdfUrl && (
+                      <a href={subject.pdfUrl} target="_blank" rel="noopener noreferrer" className="ml-2 text-blue-600 hover:underline text-sm">View Syllabus (PDF)</a>
+                    )}
+                  </div>
+                  <button
+                    onClick={() => handleDeleteSubject(subject.id)}
+                    className="ml-4 px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700"
+                  >
+                    Delete
+                  </button>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-gray-600">No subjects found for this semester.</p>
+          )}
+
+          {/* Add Subject Form */}
+          <div className="mt-6">
+            <h3 className="text-lg font-semibold mb-2 text-blue-900">Add New Subject</h3>
+            <form onSubmit={handleAddSubject} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <input
+                type="text"
+                placeholder="Subject Name"
+                value={newSubjectData.name}
+                onChange={(e) => setNewSubjectData({ ...newSubjectData, name: e.target.value })}
+                className="px-3 py-2 border border-gray-400 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                disabled={addingSubject}
+              />
+              <input
+                type="text"
+                placeholder="Subject Code"
+                value={newSubjectData.code}
+                onChange={(e) => setNewSubjectData({ ...newSubjectData, code: e.target.value })}
+                className="px-3 py-2 border border-gray-400 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                disabled={addingSubject}
+              />
+               <input
+                type="number"
+                placeholder="Credits"
+                value={newSubjectData.credit}
+                onChange={(e) => setNewSubjectData({ ...newSubjectData, credit: e.target.value })}
+                className="px-3 py-2 border border-gray-400 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                disabled={addingSubject}
+              />
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  id="elective"
+                  checked={newSubjectData.elective}
+                  onChange={(e) => setNewSubjectData({ ...newSubjectData, elective: e.target.checked })}
+                  className="mr-2 h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                  disabled={addingSubject}
+                />
+                <label htmlFor="elective" className="text-gray-700">Elective</label>
+              </div>
+              <input
+                type="file"
+                accept=".pdf"
+                onChange={(e) => setSubjectFile(e.target.files ? e.target.files[0] : null)}
+                className="col-span-2 px-3 py-2 border border-gray-400 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                disabled={addingSubject}
+              />
+              <button
+                type="submit"
+                className={`col-span-2 px-4 py-2 font-semibold rounded-md text-white transition ${
+                  addingSubject ? "bg-gray-400" : "bg-blue-600 hover:bg-blue-700"
+                }`}
+                disabled={addingSubject}
+              >
+                {addingSubject ? "Adding..." : "Add Subject"}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

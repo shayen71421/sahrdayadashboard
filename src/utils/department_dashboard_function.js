@@ -114,6 +114,71 @@ export const getCurriculumSemesters = async (departmentId, programId, schemeId) 
   }
 };
 
+// Function to add a new curriculum subject document and upload PDF
+export const addCurriculumSubject = async (departmentId, programId, schemeId, semesterId, subjectData) => {
+  try {
+    const { name, code, credit, elective, file } = subjectData;
+
+    // Upload PDF to Firebase Storage
+    const storagePath = `${departmentId}/curriculum&Syllabus/${programId}/schemes/${schemeId}/semesters/${semesterId}/subjects/${name}.pdf`;
+    const storageRef = ref(storage, storagePath);
+    const uploadTask = await uploadBytes(storageRef, file);
+    const downloadURL = await getDownloadURL(uploadTask.ref);
+
+    // Add subject document to Firestore
+    const subjectDocRef = doc(db, 'department', departmentId, 'curriculumAndSyllabus', programId, 'schemes', schemeId, 'semesters', semesterId, 'subjects', name); // Using subject name as document ID
+    await setDoc(subjectDocRef, {
+      name: name,
+      code: code,
+      credit: credit,
+      elective: elective,
+      pdfUrl: downloadURL,
+      storagePath: storagePath // Store storage path for easy deletion
+    });
+
+    console.log(`Curriculum subject ${name} added successfully to semester ${semesterId}`);
+  } catch (error) {
+    console.error(`Error adding curriculum subject to semester ${semesterId}: `, error);
+    throw error;
+  }
+};
+
+// Function to get all curriculum subjects for a semester
+export const getCurriculumSubjects = async (departmentId, programId, schemeId, semesterId) => {
+  try {
+    const collectionRef = collection(db, 'department', departmentId, 'curriculumAndSyllabus', programId, 'schemes', schemeId, 'semesters', semesterId, 'subjects');
+    const snapshot = await getDocs(collectionRef);
+    const subjects = [];
+    snapshot.forEach(doc => {
+      subjects.push({
+        id: doc.id,
+        ...doc.data()
+      });
+    });
+    return subjects;
+  } catch (error) {
+    console.error("Error fetching curriculum subjects: ", error);
+    throw error;
+  }
+};
+
+// Function to delete a curriculum subject document and its PDF
+export const deleteCurriculumSubject = async (departmentId, programId, schemeId, semesterId, subjectId) => {
+  try {
+    const subjectDocRef = doc(db, 'department', departmentId, 'curriculumAndSyllabus', programId, 'schemes', schemeId, 'semesters', semesterId, 'subjects', subjectId);
+    const subjectDoc = await getDoc(subjectDocRef);
+    if (subjectDoc.exists()) {
+      const data = subjectDoc.data();
+      const storageRef = ref(storage, data.storagePath);
+      await deleteObject(storageRef); // Delete PDF from storage
+    }
+    await deleteDoc(subjectDocRef); // Delete subject document
+    console.log(`Curriculum subject ${subjectId} deleted successfully from semester ${semesterId}`);
+  } catch (error) {
+    console.error(`Error deleting curriculum subject ${subjectId} from semester ${semesterId}: `, error);
+    throw error;
+  }
+};
 
 export const getCurriculumSchemes = async (departmentId, programId) => {
   try {
