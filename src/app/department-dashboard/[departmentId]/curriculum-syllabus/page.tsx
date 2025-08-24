@@ -113,11 +113,9 @@ const CurriculumSyllabusPage = () => {
       setError("Department or Program ID not available for adding scheme.");
       return;
     }
-    // Use the scheme name as the scheme ID for now, you can change this logic
-    // if you want a different ID based on user input
     const schemeId = newSchemeData.name.trim();
     if (!schemeId) {
-      setError("Scheme ID (based on name) cannot be empty.");
+      setError("Scheme name cannot be empty.");
       return;
     }
 
@@ -149,6 +147,7 @@ const CurriculumSyllabusPage = () => {
       }
     }
   };
+
   const handleAddProgram = async () => {
     if (!departmentId) {
       setError("Department ID not available for adding.");
@@ -178,16 +177,16 @@ const CurriculumSyllabusPage = () => {
   };
 
   if (loading) {
-    return <div className="p-6 text-center text-blue-400 font-bold">Loading curriculum programs...</div>;
+    return <div className="p-6 text-center text-blue-600 font-bold">Loading curriculum programs...</div>;
   }
 
   if (error) {
-    return <div className="p-6 text-center text-red-400 font-bold">Error: {error}</div>;
+    return <div className="p-6 text-center text-red-600 font-bold">Error: {error}</div>;
   }
 
   return (
-    <div className="max-w-4xl mx-auto p-6 bg-gray-900 rounded-lg shadow-lg text-white">
-      <h1 className="text-2xl font-bold mb-6">
+    <div className="max-w-4xl mx-auto p-6 bg-white rounded-lg shadow text-black">
+      <h1 className="text-2xl font-bold mb-6 text-blue-900">
         Curriculum & Syllabus – {departmentId ? departmentId.toUpperCase() : "N/A"}
       </h1>
 
@@ -198,13 +197,13 @@ const CurriculumSyllabusPage = () => {
           placeholder="New Program ID"
           value={newProgramId}
           onChange={(e) => setNewProgramId(e.target.value)}
-          className="flex-grow px-3 py-2 border border-gray-600 bg-gray-800 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="flex-grow px-3 py-2 border border-gray-400 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           disabled={addingProgram}
         />
         <button
           onClick={handleAddProgram}
-          className={`px-4 py-2 font-semibold rounded-md transition ${
-            addingProgram ? "bg-gray-500" : "bg-green-600 hover:bg-green-700"
+          className={`px-4 py-2 font-semibold rounded-md transition text-white ${
+            addingProgram ? "bg-gray-400" : "bg-blue-600 hover:bg-blue-700"
           }`}
           disabled={addingProgram}
         >
@@ -217,7 +216,7 @@ const CurriculumSyllabusPage = () => {
           {programs.map((programId) => (
             <li
               key={programId}
-              className="flex justify-between items-center p-3 border border-gray-700 rounded-lg bg-gray-800 hover:bg-gray-700 transition"
+              className="flex justify-between items-center p-3 border border-gray-300 rounded-lg hover:bg-gray-100 transition"
             >
               {editingId === programId ? (
                 <input
@@ -229,13 +228,13 @@ const CurriculumSyllabusPage = () => {
                     else if (e.key === "Escape") setEditingId(null);
                   }}
                   autoFocus
-                  className="font-medium border border-blue-500 bg-gray-900 text-white rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  className="font-medium border border-blue-500 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-400"
                 />
               ) : (
                 <button
                   onClick={() => handleProgramClick(programId)}
                   className={`font-medium ${
-                    selectedProgramId === programId ? "text-blue-400 underline" : "text-white hover:underline"
+                    selectedProgramId === programId ? "text-blue-600 underline" : "text-black hover:underline"
                   }`}
                 >
                   {programId}
@@ -247,22 +246,22 @@ const CurriculumSyllabusPage = () => {
                   <>
                     <button
                       onClick={() => handleEditProgram(programId)}
-                      className="px-3 py-1 bg-blue-600 text-sm rounded hover:bg-blue-700"
+                      className="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700"
                     >
                       Edit
                     </button>
                     <button
                       onClick={() => handleDeleteProgram(programId)}
-                      className="px-3 py-1 bg-red-600 text-sm rounded hover:bg-red-700"
+                      className="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700"
                     >
                       Delete
                     </button>
                     <button
                       onClick={() => handleProgramClick(programId)}
-                      className={`px-3 py-1 text-sm font-semibold rounded ${
+                      className={`px-3 py-1 text-sm font-semibold rounded text-white ${
                         selectedProgramId === programId
-                          ? "bg-blue-500 text-white"
-                          : "bg-gray-600 hover:bg-gray-500"
+                          ? "bg-blue-700"
+                          : "bg-blue-600 hover:bg-blue-700"
                       }`}
                     >
                       {selectedProgramId === programId ? "Selected" : "Select"}
@@ -274,53 +273,51 @@ const CurriculumSyllabusPage = () => {
           ))}
         </ul>
       ) : (
-        <p className="text-gray-400">No curriculum programs found.</p>
+        <p className="text-gray-600">No curriculum programs found.</p>
       )}
 
       {/* Schemes Section */}
       {selectedProgramId && (
         <div className="mt-8">
-          <h2 className="text-xl font-semibold mb-4">
+          <h2 className="text-xl font-semibold mb-4 text-blue-900">
             Schemes for {selectedProgramId.toUpperCase()}
           </h2>
           {loadingSchemes ? (
-            <div className="text-blue-400">Loading schemes...</div>
+            <div className="text-blue-600">Loading schemes...</div>
           ) : schemes.length > 0 ? (
             <ul className="space-y-2">
               {schemes.map((scheme, index) => (
-                <li key={index} className="p-2 border border-gray-700 bg-gray-800 rounded-md">
-                  {JSON.stringify(scheme)}
+                <li key={index} className="flex justify-between items-center p-2 border border-gray-300 rounded-md">
+                  <span>{scheme.name}</span>
                   <button
-                    onClick={() => handleDeleteScheme(scheme.id)} // Assuming scheme object has an 'id' property
-                    className="ml-4 px-3 py-1 bg-red-600 text-sm rounded hover:bg-red-700"
+                    onClick={() => handleDeleteScheme(scheme.id)}
+                    className="ml-4 px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700"
                   >
                     Delete
                   </button>
                 </li>
-
               ))}
             </ul>
           ) : (
-            <p className="text-gray-400">No schemes found for this program.</p>
+            <p className="text-gray-600">No schemes found for this program.</p>
           )}
 
           {/* Add Scheme Form */}
           <div className="mt-6">
-            <h3 className="text-lg font-semibold mb-2">Add New Scheme</h3>
+            <h3 className="text-lg font-semibold mb-2 text-blue-900">Add New Scheme</h3>
             <form onSubmit={handleAddScheme} className="flex flex-col gap-3">
               <input
                 type="text"
-                placeholder="Scheme ID (e.g., KTU)"
-                // You might want a separate state for a descriptive name if the ID is short
+                placeholder="Scheme Name (e.g., 2025 - KTU)"
                 value={newSchemeData.name}
                 onChange={(e) => setNewSchemeData({ ...newSchemeData, name: e.target.value })}
-                className="flex-grow px-3 py-2 border border-gray-600 bg-gray-800 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="flex-grow px-3 py-2 border border-gray-400 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 disabled={addingScheme}
               />
               <button
                 type="submit"
-                className={`px-4 py-2 font-semibold rounded-md transition ${
-                  addingScheme ? "bg-gray-500" : "bg-purple-600 hover:bg-purple-700"
+                className={`px-4 py-2 font-semibold rounded-md text-white transition ${
+                  addingScheme ? "bg-gray-400" : "bg-blue-600 hover:bg-blue-700"
                 }`}
                 disabled={addingScheme}
               >
