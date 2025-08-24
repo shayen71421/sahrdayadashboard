@@ -92,6 +92,15 @@ const DepartmentDashboardLayout = ({ children, params }: LayoutProps) => {
                 PEO / PSO / PO
               </Link>
             </li>
+
+            <li>
+              <Link
+                href={`/department-dashboard/${departmentId}/newsLetter`}
+                className="block rounded-lg px-3 py-2 text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+              >
+                NewsLetter
+              </Link>
+            </li>
           </ul>
         </nav>
       </aside>
