@@ -521,14 +521,13 @@ const CurriculumSyllabusPage = () => {
           {semesters.length > 0 ? (
             <ul className="space-y-2">
               {semesters.map((semester) => (
-                <li key={semester.id} className="flex justify-between items-center p-2 border border-gray-300 rounded-md">
+                <li key={semester.id} className={`flex justify-between items-center p-2 border border-gray-300 rounded-md ${selectedSemesterId === semester.id ? 'bg-blue-50' : ''}`}>
                   <button
                     onClick={() => handleSemesterClick(semester.id)}
-                    className={`font-medium ${
-                      selectedSemesterId === semester.id ? "text-blue-600 underline" : "text-black hover:underline"
-                    }`}
+                    className={`font-medium text-left flex-grow ${selectedSemesterId === semester.id ? "text-blue-600 underline" : "text-black hover:underline"}`}
                   >
                   <span>{semester.name || semester.id}</span>
+                  </button>
                   <button
                     onClick={async () => {
                       if (window.confirm(`Are you sure you want to delete semester "${semester.id}"?`)) {
@@ -553,7 +552,6 @@ const CurriculumSyllabusPage = () => {
                     className="ml-4 px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700"
                   >
                     Delete
-                  </button>
                   </button>
                 </li>
               ))}
