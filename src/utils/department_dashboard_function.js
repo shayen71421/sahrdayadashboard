@@ -1,5 +1,5 @@
 import { db, storage } from "./firebase.js";
-import { doc, getDoc, updateDoc, arrayUnion, arrayRemove, collection, getDocs , deleteDoc, setDoc, deleteField  } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, arrayUnion, arrayRemove, collection, getDocs , deleteDoc, setDoc, deleteField, query, where  } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
 export const fetchPoPsoPeo = async (departmentId, programId) => {
@@ -23,6 +23,77 @@ export const fetchPoPsoPeo = async (departmentId, programId) => {
     throw error;
   }
 };
+
+// Function to add a new curriculum program document
+export const addCurriculumProgram = async (departmentId, programId, programData) => {
+  try {
+    const docRef = doc(db, 'department', departmentId, 'curriculumAndSyllabus', programId);
+    const docSnap = await getDoc(docRef);
+
+    if (docSnap.exists()) {
+      throw new Error(`Document with ID ${programId} already exists.`);
+    }
+
+    await setDoc(docRef, programData);
+  } catch (error) {
+    console.error(`Error adding curriculum program ${programId}: `, error);
+    throw error;
+  }
+};
+
+// Function to get all document IDs in the curriculumAndSyllabus collection
+export const getCurriculumPrograms = async (departmentId) => {
+  try {
+    const collectionRef = collection(db, 'department', departmentId, 'curriculumAndSyllabus');
+    const snapshot = await getDocs(collectionRef);
+    const documentIds = [];
+    snapshot.forEach(doc => {
+      documentIds.push(doc.id);
+    });
+    return documentIds;
+  } catch (error) {
+    console.error("Error fetching curriculum programs: ", error);
+    throw error;
+  }
+};
+
+// Function to delete a curriculum program document
+export const deleteCurriculumProgram = async (departmentId, programId) => {
+ try {
+    const docRef = doc(db, 'department', departmentId, 'curriculumAndSyllabus', programId);
+ await deleteDoc(docRef);
+ console.log(`Curriculum program ${programId} deleted successfully!`);
+  } catch (error) {
+    console.error(`Error deleting curriculum program ${programId}: `, error);
+ throw error;
+  }
+};
+
+// Function to update a curriculum program document ID
+export const updateCurriculumProgramId = async (departmentId, oldProgramId, newProgramId) => {
+  try {
+    const oldDocRef = doc(db, 'department', departmentId, 'curriculumAndSyllabus', oldProgramId);
+    const newDocRef = doc(db, 'department', departmentId, 'curriculumAndSyllabus', newProgramId);
+
+    // Read the data from the old document
+    const docSnap = await getDoc(oldDocRef);
+
+    if (docSnap.exists()) {
+      const data = docSnap.data();
+      // Create a new document with the new ID and the old data
+      await setDoc(newDocRef, data);
+      // Delete the old document
+      await deleteDoc(oldDocRef);
+      console.log(`Curriculum program ID updated from ${oldProgramId} to ${newProgramId}`);
+    } else {
+      console.log(`Document with ID ${oldProgramId} not found.`);
+    }
+  } catch (error) {
+    console.error(`Error updating curriculum program ID from ${oldProgramId} to ${newProgramId}: `, error);
+    throw error;
+  }
+};
+
 
 // Functions for About Department
 

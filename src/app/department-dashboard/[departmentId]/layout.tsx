@@ -53,6 +53,14 @@ const DepartmentDashboardLayout = ({ children, params }: LayoutProps) => {
                 Programmes Offered
               </Link>
             </li>
+            <li>
+ <Link
+ href={`/department-dashboard/${departmentId}/curriculum-syllabus`}
+ className="block rounded-lg px-3 py-2 text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+ >
+ Curriculum & Syllabus
+ </Link>
+ </li>
 
             <li>
               <span className="block px-3 py-2 text-gray-500 font-medium">Facilities</span>
