@@ -19,9 +19,22 @@ This blueprint outlines the development plan for the Sahrdaya website, focusing 
     *   Display the fetched data in the respective pages (`hod-message/page.tsx`, `about-department/page.tsx`, etc.).
 *   **Enhance Facilities Section:**
     *   Implement fetching and displaying data for specific facilities (labs, library).
+*   **Newsletter Management:**
+    *   Implement fetching and displaying newsletters for a department. This is handled by the `fetchDepartmentNewsletters` function in `src/utils/department_dashboard_function_2.js`.
+    *   Implement adding new newsletter years. This is handled by the `addNewsletterYear` function in `src/utils/department_dashboard_function_2.js`.
+    *   Implement deleting newsletter years. This is handled by the `deleteNewsletterYear` function in `src/utils/department_dashboard_function_2.js`.
+    *   **Implement adding new newsletter events (individual newsletters) to a specific year.** This is handled by the **`addNewsletterEvent` function** in `src/utils/department_dashboard_function_2.js`. This function takes `departmentId`, `year`, `newsletterName`, `start`, `end`, and `pdf` as arguments and adds a new document with the provided `newsletterName` as the document ID within the `newsLetter` subcollection of the specified year document for the given department, including the `start`, `end`, and `pdf` fields.
+    *   Implement deleting individual newsletter events.
+        *   Implement uploading newsletter PDFs to Firebase Storage with a path structure of `[departmentId]/newsLetter/[year]/[newsletterName].pdf`. The download URL and storage path are stored in Firestore.
+    *   Create a UI in `src/app/department-dashboard/[departmentId]/newsLetter/page.tsx` to manage newsletter years and events.
+        *   **Note:** The 'start' and 'end' date fields for newsletter events must be in the 'MM/DD/YYYY' format.
+        *   **Add a form in `src/app/department-dashboard/[departmentId]/newsLetter/page.tsx` to add new newsletter events to a specific year.** This form includes input fields for 'Newsletter Name', 'Start Date', 'End Date', and 'PDF Link', as well as a dropdown to select the year. The form submission is handled by the `handleAddEvent` function, which calls the `addNewsletterEvent` utility function to add the new event to Firestore. After successful submission, the form fields are cleared and the newsletters are reloaded to display the new entry.
+
     *   Create dedicated components or sections within `facilities/layout.tsx` to handle the display of lab and library information.
     *   Ensure the routes `facilities/labs/page.tsx` and `facilities/library/page.tsx` correctly fetch and display their respective data.
 
+        *   **Bug Fix:** A bug in the `uploadNewsletterPdf` function in `src/utils/department_dashboard_function_2.js` was fixed by adding proper error handling.
+        *   **Bug Fix:** A bug in the `handleAddEvent` function in `src/app/department-dashboard/[departmentId]/newsLetter/page.tsx` was fixed by using the correct state setter for the PDF file.
 ### 2. Curriculum and Syllabus Management
 
 *   **Implement adding new curriculum programs:**

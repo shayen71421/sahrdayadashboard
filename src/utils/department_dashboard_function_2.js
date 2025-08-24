@@ -1,6 +1,8 @@
 import { db } from "./firebase.js"; // adjust to your firebase config
 import { doc, setDoc, collection, getDocs, deleteDoc } from "firebase/firestore";
 
+import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
+import { storage } from "./firebase.js"; // adjust to your firebase config
 /**
  * Fetches all newsletters for a given department.
  * Structure:
@@ -44,6 +46,49 @@ export const addNewsletterYear = async (departmentId, year) => {
   } catch (error) {
     console.error("Error adding newsletter year:", error);
     throw error;
+  }
+};
+
+/**
+ * Adds a new newsletter event to a specific year within a department.
+ */
+export const addNewsletterEvent = async (departmentId, year, newsletterName, start, end, pdfFile) => {
+  if (!pdfFile) {
+    console.error("PDF file is required to add a newsletter event.");
+    throw new Error("PDF file is required.");
+  }
+
+  try {
+    // Upload PDF first
+    const { downloadURL, storagePath } = await uploadNewsletterPdf(pdfFile, departmentId, year, newsletterName);
+
+    // Then add newsletter event to Firestore
+    const newsletterDocRef = doc(db, "department", departmentId, "newsLetter", year, "newsletters", newsletterName);
+    await setDoc(newsletterDocRef, {
+      start: start,
+      end: end,
+      pdf: downloadURL, // Store the download URL in Firestore
+      storagePath: storagePath // Optionally store the storage path
+    });
+  } catch (error) {
+    console.error(`Error adding newsletter event "${newsletterName}" for year ${year}:`, error);
+    throw error;
+  }
+};
+
+/**
+ * Uploads a newsletter PDF to Firebase Storage.
+ */
+export const uploadNewsletterPdf = async (file, departmentId, year, newsletterName) => {
+  try {
+    const storageRef = ref(storage, `${departmentId}/newsLetter/${year}/${newsletterName}.pdf`);
+    const uploadTask = uploadBytesResumable(storageRef, file);
+    await uploadTask; // Wait for the upload to complete
+    const downloadURL = await getDownloadURL(uploadTask.snapshot.ref)
+ return { downloadURL, storagePath: storageRef.fullPath }; // Return both URL and path
+  } catch (error) {
+ console.error(`Error uploading newsletter PDF "${newsletterName}" for year ${year}:`, error);
+ throw error; // Re-throw the error to be caught by the calling function
   }
 };
 
