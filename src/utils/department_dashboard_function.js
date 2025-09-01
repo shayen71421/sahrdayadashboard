@@ -1090,3 +1090,153 @@ export const deleteClass = async (departmentId, year, classId) => {
     throw error;
   }
 };
+export const fetchDacObjective = async (departmentId) => {
+  try {
+    const docRef = doc(db, "department", departmentId, "people", "DAC");
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) {
+      return docSnap.data().objective;
+    } else {
+      return "No objective found.";
+    }
+  } catch (error) {
+    console.error("Error fetching objective:", error);
+    throw new Error("Error fetching objective.");
+  }
+};
+
+export const updateDacObjective = async (departmentId, newObjective) => {
+  try {
+    const docRef = doc(db, "department", departmentId, "people", "DAC");
+    await setDoc(docRef, { objective: newObjective });
+  } catch (error) {
+    console.error("Error saving objective:", error);
+    throw new Error("Error saving objective.");
+  }
+};
+
+
+
+// Fetch years as documents IDs under years subcollection
+export const fetchDacYears = async (departmentId) => {
+  try {
+    const yearsCollectionRef = collection(db, "department", departmentId, "people", "DAC", "years");
+    const snapshot = await getDocs(yearsCollectionRef);
+    // Return array of document IDs (year strings)
+    return snapshot.docs.map((doc) => doc.id);
+  } catch (error) {
+    console.error("Error fetching DAC years:", error);
+    throw new Error("Error fetching DAC years.");
+  }
+};
+
+// Add year by creating a new doc under years subcollection
+export const addDacYear = async (departmentId, year) => {
+  try {
+    const yearDocRef = doc(db, "department", departmentId, "people", "DAC", "years", year);
+    // Creating document with empty data, can be extended later
+    await setDoc(yearDocRef, {});
+  } catch (error) {
+    console.error("Error adding DAC year:", error);
+    throw error;
+  }
+};
+
+// Delete year by deleting document under years subcollection
+export const deleteDacYear = async (departmentId, year) => {
+  try {
+    const yearDocRef = doc(db, "department", departmentId, "people", "DAC", "years", year);
+    await deleteDoc(yearDocRef);
+  } catch (error) {
+    console.error("Error deleting DAC year:", error);
+    throw error;
+  }
+};
+
+
+
+
+
+/**
+ * Upload DAC Constitution PDF for a specific year.
+ */
+export async function uploadConstitutionPdf(departmentId, year, file) {
+  try {
+    const storagePath = `${departmentId}/people/DAC/years/${year}/constitution.pdf`;
+    const storageRef = ref(storage, storagePath);
+    const uploadTask = uploadBytesResumable(storageRef, file);
+    await uploadTask;
+    const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+    const docRef = doc(db, "department", departmentId, "people", "DAC", "years", year, "constitution", "doc");
+    await setDoc(docRef, {
+      pdfLink: downloadURL,
+      storagePath,
+      updatedAt: new Date().toISOString(),
+    }, { merge: true });
+    return downloadURL;
+  } catch (error) {
+    console.error("Error uploading Constitution PDF:", error);
+    throw error;
+  }
+}
+
+/**
+ * Upload DAC Meeting Minutes PDF for a specific year and document ID.
+ */
+export async function uploadMeetingMinutesPdf(departmentId, year, docId, file) {
+  try {
+    const storagePath = `${departmentId}/people/DAC/years/${year}/meetingMinutes/${docId}.pdf`;
+    const storageRef = ref(storage, storagePath);
+    const uploadTask = uploadBytesResumable(storageRef, file);
+    await uploadTask;
+    const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+    const docRef = doc(db, "department", departmentId, "people", "DAC", "years", year, "meetingMinutes", docId);
+    await setDoc(docRef, {
+      pdfLink: downloadURL,
+      storagePath,
+      updatedAt: new Date().toISOString(),
+    }, { merge: true });
+    return downloadURL;
+  } catch (error) {
+    console.error("Error uploading Meeting Minutes PDF:", error);
+    throw error;
+  }
+}
+
+
+/**
+ * Fetch constitution PDF metadata for a year.
+ */
+export async function fetchConstitution(departmentId, year) {
+  const docRef = doc(db, "department", departmentId, "people", "DAC", "years", year, "constitution", "doc");
+  const docSnap = await getDoc(docRef);
+  if (docSnap.exists()) return docSnap.data();
+  return null;
+}
+
+/**
+ * Fetch all meeting minutes docs for a year.
+ */
+export async function fetchMeetingMinutes(departmentId, year) {
+  const minutesColRef = collection(db, "department", departmentId, "people", "DAC", "years", year, "meetingMinutes");
+  const snapshot = await getDocs(minutesColRef);
+  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+}
+
+/**
+ * Delete constitution PDF metadata and storage file for a year (optional: add storage deletion).
+ */
+export async function deleteConstitution(departmentId, year) {
+  const docRef = doc(db, "department", departmentId, "people", "DAC", "years", year, "constitution", "doc");
+  await deleteDoc(docRef);
+  // TODO: optionally delete storage file using storagePath stored previously
+}
+
+/**
+ * Delete a meeting minutes document.
+ */
+export async function deleteMeetingMinutes(departmentId, year, docId) {
+  const docRef = doc(db, "department", departmentId, "people", "DAC", "years", year, "meetingMinutes", docId);
+  await deleteDoc(docRef);
+  // TODO: optionally delete storage file using storagePath stored previously
+}
