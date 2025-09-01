@@ -1,6 +1,7 @@
 import { db, storage } from "./firebase.js";
 import { doc, getDoc, updateDoc, arrayUnion, arrayRemove, collection, getDocs , deleteDoc, setDoc, deleteField, query, where  } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
+import { ref, uploadBytes, uploadBytesResumable , getDownloadURL, deleteObject } from "firebase/storage";
+
 
 export const fetchPoPsoPeo = async (departmentId, programId) => {
   try {
@@ -948,3 +949,144 @@ export const deleteNewsletterEvent = async (departmentId, year, newsletterName) 
   }
 };
 
+
+
+export const fetchStudentYears = async (departmentId) => {
+  try {
+    const yearsCollectionRef = collection(db, "department", departmentId, "people", "students", "years");
+    const yearsSnapshot = await getDocs(yearsCollectionRef);
+    const years = yearsSnapshot.docs.map((doc) => doc.id);
+    return years;
+  } catch (error) {
+    console.error("Error fetching student years:", error);
+    throw error;
+  }
+};
+
+export const addStudentYear = async (departmentId, year) => {
+  try {
+    const yearDocRef = doc(db, "department", departmentId, "people", "students", "years", year);
+    await setDoc(yearDocRef, {}); // Creates an empty document for the year
+  } catch (error) {
+    console.error("Error adding student year:", error);
+    throw error;
+  }
+};
+
+export const editStudentYear = async (departmentId, oldYear, newYear) => {
+  try {
+    const oldYearDocRef = doc(db, "department", departmentId, "people", "students", "years", oldYear);
+    const oldYearDocSnap = await getDoc(oldYearDocRef);
+
+    if (oldYearDocSnap.exists()) {
+      const data = oldYearDocSnap.data();
+      const newYearDocRef = doc(db, "department", departmentId, "people", "students", "years", newYear);
+      await setDoc(newYearDocRef, data);
+      await deleteDoc(oldYearDocRef);
+    } else {
+      throw new Error("Year to edit does not exist.");
+    }
+  } catch (error) {
+    console.error("Error editing student year:", error);
+    throw error;
+  }
+};
+
+export const deleteStudentYear = async (departmentId, year) => {
+  try {
+    const yearDocRef = doc(db, "department", departmentId, "people", "students", "years", year);
+    await deleteDoc(yearDocRef);
+  } catch (error) {
+    console.error("Error deleting student year:", error);
+    throw error;
+  }
+};
+
+/**
+ * Upload class PDF linked to a specific student year and save metadata.
+ *
+ * @param {string} departmentId - Department identifier.
+ * @param {string} year - Student year (e.g., "2024-2025").
+ * @param {string} className - Class name.
+ * @param {File} pdfFile - PDF file to upload.
+ */
+export const addClassWithPDF = async (departmentId, year, className, pdfFile) => {
+  try {
+    // Define storage path including year
+    const storagePath = `${departmentId}/people/students/years/${year}/${className}.pdf`;
+    const storageRef = ref(storage, storagePath);
+
+    // Upload PDF
+    const uploadTask = uploadBytesResumable(storageRef, pdfFile);
+    await uploadTask;
+
+    // Get download URL
+    const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+
+    // Firestore doc path: classes subcollection under year document
+    const classDocRef = doc(
+      db,
+      "department",
+      departmentId,
+      "people",
+      "students",
+      "years",
+      year,
+      "classes",
+      className
+    );
+
+    // Save class metadata
+    await setDoc(classDocRef, {
+      name: className,
+      pdfLink: downloadURL,
+      storagePath,
+      createdAt: new Date().toISOString(),
+    });
+  } catch (error) {
+    console.error(`Error adding class "${className}" for year "${year}":`, error);
+    throw error;
+  }
+};
+
+export const fetchClassesForYear = async (departmentId, year) => {
+  try {
+    const classesCollectionRef = collection(
+      db,
+      "department",
+      departmentId,
+      "people",
+      "students",
+      "years",
+      year,
+      "classes"
+    );
+    const classesSnapshot = await getDocs(classesCollectionRef);
+    return classesSnapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+  } catch (error) {
+    console.error(`Error fetching classes for year ${year}:`, error);
+    return [];
+  }
+};
+export const deleteClass = async (departmentId, year, classId) => {
+  try {
+    const classDocRef = doc(
+      db,
+      "department",
+      departmentId,
+      "people",
+      "students",
+      "years",
+      year,
+      "classes",
+      classId
+    );
+    await deleteDoc(classDocRef);
+  } catch (error) {
+    console.error(`Error deleting class ${classId} for year ${year}:`, error);
+    throw error;
+  }
+};
