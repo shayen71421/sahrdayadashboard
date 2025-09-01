@@ -5,14 +5,21 @@ import { useParams } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { 
-  fetchDqacObjective, updateDqacObjective,
-  fetchDqacYears, addDqacYear, deleteDqacYear,
-  fetchDqacConstitution, uploadDqacConstitutionPdf, deleteDqacConstitution,
-  fetchDqacMeetingMinutes, uploadDqacMeetingMinutesPdf, deleteDqacMeetingMinutes
+import {
+  fetchBosObjective,
+  updateBosObjective,
+  fetchBosYears,
+  addBosYear,
+  deleteBosYear,
+  fetchBosConstitution,
+  uploadBosConstitutionPdf,
+  deleteBosConstitution,
+  fetchBosMeetingMinutes,
+  uploadBosMeetingPdf,
+  deleteBosMeetingMinutes
 } from "@/utils/department_dashboard_function";
 
-export default function DQACPage() {
+export default function BOSPage() {
   const params = useParams();
   const departmentId = params?.departmentId ?? "";
 
@@ -23,7 +30,7 @@ export default function DQACPage() {
   const [years, setYears] = useState<string[]>([]);
   const [newYear, setNewYear] = useState("");
 
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const [selectedYear, setSelectedYear] = useState<string | null>(null);
@@ -52,8 +59,8 @@ export default function DQACPage() {
       setError(null);
       try {
         const [obj, yrs] = await Promise.all([
-          fetchDqacObjective(departmentId),
-          fetchDqacYears(departmentId),
+          fetchBosObjective(departmentId),
+          fetchBosYears(departmentId),
         ]);
         if (!mounted.current) return;
         setObjective(obj);
@@ -81,8 +88,8 @@ export default function DQACPage() {
     const loadYearDocs = async () => {
       try {
         const [constitution, minutes] = await Promise.all([
-          fetchDqacConstitution(departmentId, selectedYear),
-          fetchDqacMeetingMinutes(departmentId, selectedYear),
+          fetchBosConstitution(departmentId, selectedYear),
+          fetchBosMeetingMinutes(departmentId, selectedYear),
         ]);
         if (!mounted.current) return;
         setConstitutionDoc(constitution);
@@ -96,14 +103,14 @@ export default function DQACPage() {
   }, [departmentId, selectedYear]);
 
   const handleEditObjective = () => setIsEditingObjective(true);
-  const handleCancelEditObjective = () => {
+  const handleCancelObjective = () => {
     setIsEditingObjective(false);
     setNewObjective(objective);
   };
   const handleSaveObjective = async () => {
     setIsLoading(true);
     try {
-      await updateDqacObjective(departmentId, newObjective);
+      await updateBosObjective(departmentId, newObjective);
       if (!mounted.current) return;
       setObjective(newObjective);
       setIsEditingObjective(false);
@@ -120,9 +127,9 @@ export default function DQACPage() {
     if (!newYear.trim()) return;
     setIsLoading(true);
     try {
-      await addDqacYear(departmentId, newYear);
+      await addBosYear(departmentId, newYear);
       if (!mounted.current) return;
-      setYears(prev => [...prev, newYear]);
+      setYears(yrs => [...yrs, newYear]);
       setSelectedYear(newYear);
       setNewYear("");
     } catch {
@@ -133,13 +140,13 @@ export default function DQACPage() {
     }
   };
 
-  const handleDeleteYear = async (yearToDelete: string) => {
+  const handleDeleteYear = async (year: string) => {
     setIsLoading(true);
     try {
-      await deleteDqacYear(departmentId, yearToDelete);
+      await deleteBosYear(departmentId, year);
       if (!mounted.current) return;
-      setYears(prev => prev.filter(y => y !== yearToDelete));
-      if (selectedYear === yearToDelete) setSelectedYear(null);
+      setYears(yrs => yrs.filter(y => y !== year));
+      if (selectedYear === year) setSelectedYear(null);
     } catch {
       if (!mounted.current) return;
       setError("Failed to delete year.");
@@ -152,9 +159,9 @@ export default function DQACPage() {
     if (!constitutionFile || !selectedYear) return;
     setUploadingConstitution(true);
     try {
-      await uploadDqacConstitutionPdf(departmentId, selectedYear, constitutionFile);
+      await uploadBosConstitutionPdf(departmentId, selectedYear, constitutionFile);
       if (!mounted.current) return;
-      const updatedDoc = await fetchDqacConstitution(departmentId, selectedYear);
+      const updatedDoc = await fetchBosConstitution(departmentId, selectedYear);
       setConstitutionDoc(updatedDoc);
       setConstitutionFile(null);
     } catch {
@@ -168,7 +175,7 @@ export default function DQACPage() {
   const handleDeleteConstitution = async () => {
     if (!selectedYear) return;
     try {
-      await deleteDqacConstitution(departmentId, selectedYear);
+      await deleteBosConstitution(departmentId, selectedYear);
       if (!mounted.current) return;
       setConstitutionDoc(null);
     } catch {
@@ -184,29 +191,29 @@ export default function DQACPage() {
     }
     setUploadingMinutes(true);
     try {
-      await uploadDqacMeetingMinutesPdf(departmentId, selectedYear, newMinutesDocId, minutesFile);
+      await uploadBosMeetingPdf(departmentId, selectedYear, newMinutesDocId, minutesFile);
       if (!mounted.current) return;
-      const updatedMinutes = await fetchDqacMeetingMinutes(departmentId, selectedYear);
+      const updatedMinutes = await fetchBosMeetingMinutes(departmentId, selectedYear);
       setMeetingMinutes(updatedMinutes);
       setMinutesFile(null);
       setNewMinutesDocId("");
     } catch {
       if (!mounted.current) return;
-      setError("Failed to upload meeting minutes PDF.");
+      setError("Failed to upload meeting minutes.");
     } finally {
       if (mounted.current) setUploadingMinutes(false);
     }
   };
 
-  const handleDeleteMinutes = async (docId:String) => {
+  const handleDeleteMinutes = async (docId: string) => {
     if (!selectedYear) return;
     try {
-      await deleteDqacMeetingMinutes(departmentId, selectedYear, docId);
+      await deleteBosMeetingMinutes(departmentId, selectedYear, docId);
       if (!mounted.current) return;
-      setMeetingMinutes(prev => prev.filter(doc => doc.id !== docId));
+      setMeetingMinutes(mins => mins.filter(m => m.id !== docId));
     } catch {
       if (!mounted.current) return;
-      setError("Failed to delete meeting minutes PDF.");
+      setError("Failed to delete meeting minutes.");
     }
   };
 
@@ -214,7 +221,7 @@ export default function DQACPage() {
     <div className="container mx-auto p-4 space-y-8">
       <Card>
         <CardHeader>
-          <CardTitle>DQAC Objective</CardTitle>
+          <h2 className="text-xl font-semibold">Board Of Study Objective</h2>
         </CardHeader>
         <CardContent>
           {isLoading ? (
@@ -222,15 +229,15 @@ export default function DQACPage() {
           ) : isEditingObjective ? (
             <>
               <Input value={newObjective} onChange={e => setNewObjective(e.target.value)} />
-              <div className="flex space-x-2 mt-2">
+              <div className="mt-2 flex space-x-2">
                 <Button onClick={handleSaveObjective}>Save</Button>
-                <Button variant="outline" onClick={handleCancelEditObjective}>Cancel</Button>
+                <Button variant="outline" onClick={handleCancelObjective}>Cancel</Button>
               </div>
             </>
           ) : (
             <>
               <p>{objective}</p>
-              <Button onClick={handleEditObjective}>Edit</Button>
+              <Button onClick={() => setIsEditingObjective(true)}>Edit</Button>
             </>
           )}
         </CardContent>
@@ -238,19 +245,22 @@ export default function DQACPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>DQAC Academic Years</CardTitle>
+          <h2 className="text-xl font-semibold">Board Of Study Academic Years</h2>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleAddYear} className="flex space-x-2 mb-4">
-            <Input value={newYear} onChange={e => setNewYear(e.target.value)} placeholder="e.g., 2024-25" />
+          <form onSubmit={handleAddYear} className="mb-4 flex space-x-2">
+            <Input placeholder="e.g., 2024-25" value={newYear} onChange={e => setNewYear(e.target.value)} />
             <Button type="submit">Add Year</Button>
           </form>
-          {years.length > 0 && years.map(year => (
-            <div key={year} className="flex items-center justify-between p-2 border rounded mb-1">
-              <button onClick={() => setSelectedYear(year)} className={`flex-grow text-left ${selectedYear === year ? "font-bold underline" : ""}`}>
+          {years.map(year => (
+            <div key={year} className="mb-1 flex items-center justify-between rounded border p-2">
+              <button
+                className={`flex-grow text-left ${selectedYear === year ? "font-bold underline" : ""}`}
+                onClick={() => setSelectedYear(year)}
+              >
                 {year}
               </button>
-              <Button variant="destructive" size="sm" onClick={() => handleDeleteYear(year)}>Delete</Button>
+              <Button size="sm" variant="destructive" onClick={() => handleDeleteYear(year)}>Delete</Button>
             </div>
           ))}
         </CardContent>
@@ -260,23 +270,21 @@ export default function DQACPage() {
         <>
           <Card>
             <CardHeader>
-              <CardTitle>Constitution Document for {selectedYear}</CardTitle>
+              <h3 className="text-lg font-semibold">Constitution Document for {selectedYear}</h3>
             </CardHeader>
             <CardContent>
               {constitutionDoc ? (
-                <div className="flex justify-between items-center">
-                  <a href={constitutionDoc.pdfLink} target="_blank" rel="noreferrer" className="text-blue-600 underline">
+                <div className="flex items-center justify-between">
+                  <a href={constitutionDoc.pdf} target="_blank" rel="noreferrer" className="text-blue-600 underline">
                     View Constitution PDF
                   </a>
-                  <Button variant="destructive" size="sm" onClick={handleDeleteConstitution}>
-                    Delete
-                  </Button>
+                  <Button size="sm" variant="destructive" onClick={handleDeleteConstitution}>Delete</Button>
                 </div>
               ) : (
                 <p>No constitution document uploaded.</p>
               )}
               <input type="file" accept="application/pdf" onChange={e => setConstitutionFile(e.target.files?.[0] ?? null)} />
-              <Button onClick={handleUploadConstitution} disabled={uploadingConstitution}>
+              <Button onClick={handleUploadConstitution} disabled={uploadingConstitution} className="mt-2">
                 {uploadingConstitution ? "Uploading..." : "Upload Constitution PDF"}
               </Button>
             </CardContent>
@@ -284,25 +292,24 @@ export default function DQACPage() {
 
           <Card>
             <CardHeader>
-              <CardTitle>Meeting Minutes for {selectedYear}</CardTitle>
+              <h3 className="text-lg font-semibold">Meeting Minutes for {selectedYear}</h3>
             </CardHeader>
             <CardContent>
               {meetingMinutes.length > 0 ? (
                 <ul className="mb-4">
-                  {meetingMinutes.map(({ id, pdfLink }) => (
-                    <li key={id} className="flex justify-between items-center p-2 border rounded mb-1">
-                      <a href={pdfLink} target="_blank" rel="noreferrer" className="text-blue-600 underline">{id}</a>
-                      <Button variant="destructive" size="sm" onClick={() => handleDeleteMinutes(id)}>Delete</Button>
+                  {meetingMinutes.map(({ id, pdf }) => (
+                    <li key={id} className="mb-1 flex justify-between rounded border p-2">
+                      <a href={pdf} target="_blank" rel="noreferrer" className="text-blue-600 underline">{id}</a>
+                      <Button size="sm" variant="destructive" onClick={() => handleDeleteMinutes(id)}>Delete</Button>
                     </li>
                   ))}
                 </ul>
               ) : (
                 <p>No meeting minutes uploaded.</p>
               )}
-
-              <Input value={newMinutesDocId} onChange={e => setNewMinutesDocId(e.target.value)} placeholder="Document ID (e.g., semester-1)" className="mb-2" />
+              <Input placeholder="Document ID (e.g., semester-1)" value={newMinutesDocId} onChange={e => setNewMinutesDocId(e.target.value)} className="mb-2" />
               <input type="file" accept="application/pdf" onChange={e => setMinutesFile(e.target.files?.[0] ?? null)} />
-              <Button onClick={handleUploadMinutes} disabled={uploadingMinutes}>
+              <Button onClick={handleUploadMinutes} disabled={uploadingMinutes} className="mt-2">
                 {uploadingMinutes ? "Uploading..." : "Upload Meeting Minutes"}
               </Button>
             </CardContent>
@@ -310,7 +317,7 @@ export default function DQACPage() {
         </>
       )}
 
-      {error && <p className="text-red-600 mt-4">{error}</p>}
+      {error && <p className="mt-4 text-center text-red-600">{error}</p>}
     </div>
   );
 }

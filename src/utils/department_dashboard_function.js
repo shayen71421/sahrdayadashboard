@@ -1396,3 +1396,157 @@ export const deleteDqacMeetingMinutes = async (departmentId, year, docId) => {
     throw error;
   }
 };
+// Fetch BOS Objective
+export const fetchBosObjective = async (departmentId) => {
+  try {
+    const docRef = doc(db, "department", departmentId, "people", "BOS");
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) {
+      return docSnap.data().objective || "No objective found.";
+    }
+    return "No objective found.";
+  } catch (error) {
+    console.error("Error fetching BOS objective:", error);
+    throw new Error("Error fetching BOS objective.");
+  }
+};
+
+// Update BOS Objective
+export const updateBosObjective = async (departmentId, newObjective) => {
+  try {
+    const docRef = doc(db, "department", departmentId, "people", "BOS");
+    await setDoc(docRef, { objective: newObjective }, { merge: true });
+  } catch (error) {
+    console.error("Error updating BOS objective:", error);
+    throw error;
+  }
+};
+
+// Fetch BOS Academic Years
+export const fetchBosYears = async (departmentId) => {
+  try {
+    const collectionRef = collection(db, "department", departmentId, "people", "BOS", "years");
+    const snapshot = await getDocs(collectionRef);
+    return snapshot.docs.map((doc) => doc.id);
+  } catch (error) {
+    console.error("Error fetching BOS years:", error);
+    throw new Error("Error fetching BOS years.");
+  }
+};
+
+// Add BOS Year
+export const addBosYear = async (departmentId, year) => {
+  try {
+    const docRef = doc(db, "department", departmentId, "people", "BOS", "years", year);
+    await setDoc(docRef, {});
+  } catch (error) {
+    console.error("Error adding BOS year:", error);
+    throw error;
+  }
+};
+
+// Delete BOS Year
+export const deleteBosYear = async (departmentId, year) => {
+  try {
+    const docRef = doc(db, "department", departmentId, "people", "BOS", "years", year);
+    await deleteDoc(docRef);
+  } catch (error) {
+    console.error("Error deleting BOS year:", error);
+    throw error;
+  }
+};
+
+// Upload BOS Constitution PDF
+export const uploadBosConstitutionPdf = async (departmentId, year, file) => {
+  try {
+    const storagePath = `${departmentId}/people/BOS/years/${year}/constitution.pdf`;
+    const storageRef = ref(storage, storagePath);
+    const uploadTask = uploadBytesResumable(storageRef, file);
+    await uploadTask;
+    const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+
+    const docRef = doc(db, "department", departmentId, "people", "BOS", "years", year, "constitution", "doc");
+    await setDoc(docRef, {
+      pdfLink: downloadURL,
+      storagePath,
+      updatedAt: new Date().toISOString(),
+    }, { merge: true });
+
+    return downloadURL;
+  } catch (error) {
+    console.error("Error uploading BOS constitution PDF:", error);
+    throw error;
+  }
+};
+
+// Upload BOS Meeting Minutes PDF
+export const uploadBosMeetingPdf = async (departmentId, year, docId, file) => {
+  try {
+    const storagePath = `${departmentId}/people/BOS/years/${year}/meetingMinutes/${docId}.pdf`;
+    const storageRef = ref(storage, storagePath);
+    const uploadTask = uploadBytesResumable(storageRef, file);
+    await uploadTask;
+    const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+
+    const docRef = doc(db, "department", departmentId, "people", "BOS", "years", year, "meetingMinutes", docId);
+    await setDoc(docRef, {
+      pdfLink: downloadURL,
+      storagePath,
+      updatedAt: new Date().toISOString(),
+    }, { merge: true });
+
+    return downloadURL;
+  } catch (error) {
+    console.error("Error uploading BOS meeting PDF:", error);
+    throw error;
+  }
+};
+
+// Get BOS Constitution metadata
+export const fetchBosConstitution = async (departmentId, year) => {
+  try {
+    const docRef = doc(db, "department", departmentId, "people", "BOS", "years", year, "constitution", "doc");
+    const docSnap = await getDoc(docRef);
+    if(docSnap.exists()) return docSnap.data();
+    return null;
+  } catch(error) {
+    console.error("Error fetching BOS constitution:", error);
+    throw error;
+  }
+};
+
+// Get all BOS Meeting Minutes
+export const fetchBosMeetingMinutes = async (departmentId, year) => {
+  try {
+    const minutesCol = collection(db, "department", departmentId, "people", "BOS", "years", year, "meetingMinutes");
+    const snapshot = await getDocs(minutesCol);
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  } catch(error) {
+    console.error("Error fetching BOS meeting minutes:", error);
+    throw error;
+  }
+};
+
+// Delete BOS Constitution document
+export const deleteBosConstitution = async (departmentId, year) => {
+  try {
+    const docRef = doc(db, "department", departmentId, "people", "BOS", "years", year, "constitution", "doc");
+    await deleteDoc(docRef);
+    // optionally delete file from storage too
+  } catch(error) {
+    console.error("Error deleting BOS constitution:", error);
+    throw error;
+  }
+};
+
+// Delete BOS Meeting Minutes document
+export const deleteBosMeetingMinutes = async (departmentId, year, docId) => {
+  try {
+    const docRef = doc(db, "department", departmentId, "people", "BOS", "years", year, "meetingMinutes", docId);
+    await deleteDoc(docRef);
+    // optionally delete file from storage too
+  } catch(error) {
+    console.error("Error deleting BOS meeting minutes:", error);
+    throw error;
+  }
+};
