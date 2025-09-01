@@ -114,10 +114,18 @@ const DepartmentDashboardLayout = ({ children, params }: LayoutProps) => {
                 </li>
                 <li>
                   <Link
-                    href={`/department-dashboard/${departmentId}/facilities/library`}
+                    href={`/department-dashboard/${departmentId}/people/dac`}
                     className="block rounded-md px-3 py-2 text-gray-600 hover:bg-gray-100 hover:text-gray-900"
                   >
-                    Library
+                    DAC
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    href={`/department-dashboard/${departmentId}/people/dqac`}
+                    className="block rounded-md px-3 py-2 text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                  >
+                    DQAC
                   </Link>
                 </li>
               </ul>

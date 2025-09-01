@@ -1090,6 +1090,7 @@ export const deleteClass = async (departmentId, year, classId) => {
     throw error;
   }
 };
+
 export const fetchDacObjective = async (departmentId) => {
   try {
     const docRef = doc(db, "department", departmentId, "people", "DAC");
@@ -1240,3 +1241,158 @@ export async function deleteMeetingMinutes(departmentId, year, docId) {
   await deleteDoc(docRef);
   // TODO: optionally delete storage file using storagePath stored previously
 }
+
+
+export const fetchDqacObjective = async (departmentId) => {
+  try {
+    const docRef = doc(db, "department", departmentId, "people", "DQAC");
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) {
+      return docSnap.data().objective || "No objective found.";
+    }
+    return "No objective found.";
+  } catch (error) {
+    console.error("Error fetching DQAC objective:", error);
+    throw new Error("Error fetching DQAC objective.");
+  }
+};
+
+// Update the objective text for DQAC
+export const updateDqacObjective = async (departmentId, newObjective) => {
+  try {
+    const docRef = doc(db, "department", departmentId, "people", "DQAC");
+    await setDoc(docRef, { objective: newObjective }, { merge: true });
+  } catch (error) {
+    console.error("Error updating DQAC objective:", error);
+    throw error;
+  }
+};
+
+// Fetch all DQAC years (as document IDs from subcollection)
+export const fetchDqacYears = async (departmentId) => {
+  try {
+    const collectionRef = collection(db, "department", departmentId, "people", "DQAC", "years");
+    const snapshot = await getDocs(collectionRef);
+    return snapshot.docs.map((doc) => doc.id);
+  } catch (error) {
+    console.error("Error fetching DQAC years:", error);
+    throw error;
+  }
+};
+
+// Add a DQAC year (as a document in the years subcollection)
+export const addDqacYear = async (departmentId, year) => {
+  try {
+    const docRef = doc(db, "department", departmentId, "people", "DQAC", "years", year);
+    await setDoc(docRef, {});
+  } catch (error) {
+    console.error("Error adding DQAC year:", error);
+    throw error;
+  }
+};
+
+// Delete a DQAC year document
+export const deleteDqacYear = async (departmentId, year) => {
+  try {
+    const docRef = doc(db, "department", departmentId, "people", "DQAC", "years", year);
+    await deleteDoc(docRef);
+  } catch (error) {
+    console.error("Error deleting DQAC year:", error);
+    throw error;
+  }
+};
+
+// Upload DQAC constitution PDF and save metadata
+export const uploadDqacConstitutionPdf = async (departmentId, year, file) => {
+  try {
+    const storagePath = `${departmentId}/people/DQAC/years/${year}/constitution.pdf`;
+    const storageRef = ref(storage, storagePath);
+    const uploadTask = uploadBytesResumable(storageRef, file);
+    await uploadTask;
+    const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+    
+    const docRef = doc(db, "department", departmentId, "people", "DQAC", "years", year, "constitution", "doc");
+    await setDoc(docRef, {
+      pdfLink: downloadURL,
+      storagePath,
+      updatedAt: new Date().toISOString(),
+    }, { merge: true });
+    
+    return downloadURL;
+  } catch (error) {
+    console.error("Error uploading DQAC constitution PDF:", error);
+    throw error;
+  }
+};
+
+// Upload a meeting minutes PDF for DQAC with given docId/key
+export const uploadDqacMeetingMinutesPdf = async (departmentId, year, docId, file) => {
+  try {
+    const storagePath = `${departmentId}/people/DQAC/years/${year}/meetingMinutes/${docId}.pdf`;
+    const storageRef = ref(storage, storagePath);
+    const uploadTask = uploadBytesResumable(storageRef, file);
+    await uploadTask;
+    const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+    
+    const docRef = doc(db, "department", departmentId, "people", "DQAC", "years", year, "meetingMinutes", docId);
+    await setDoc(docRef, {
+      pdfLink: downloadURL,
+      storagePath,
+      updatedAt: new Date().toISOString(),
+    }, { merge: true });
+    
+    return downloadURL;
+  } catch (error) {
+    console.error("Error uploading DQAC meeting minutes PDF:", error);
+    throw error;
+  }
+};
+
+// Get DQAC constitution document metadata for a year
+export const fetchDqacConstitution = async (departmentId, year) => {
+  try {
+    const docRef = doc(db, "department", departmentId, "people", "DQAC", "years", year, "constitution", "doc");
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) return docSnap.data();
+    return null;
+  } catch (error) {
+    console.error("Error fetching DQAC constitution:", error);
+    throw error;
+  }
+};
+
+// Get all DQAC meeting minutes docs metadata for a year
+export const fetchDqacMeetingMinutes = async (departmentId, year) => {
+  try {
+    const colRef = collection(db, "department", departmentId, "people", "DQAC", "years", year, "meetingMinutes");
+    const snapshot = await getDocs(colRef);
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  } catch (error) {
+    console.error("Error fetching DQAC meeting minutes:", error);
+    throw error;
+  }
+};
+
+// Delete DQAC constitution document
+export const deleteDqacConstitution = async (departmentId, year) => {
+  try {
+    const docRef = doc(db, "department", departmentId, "people", "DQAC", "years", year, "constitution", "doc");
+    await deleteDoc(docRef);
+    // TODO: Delete file from storage if needed, using stored path
+  } catch (error) {
+    console.error("Error deleting DQAC constitution:", error);
+    throw error;
+  }
+};
+
+// Delete a DQAC meeting minutes document by docId
+export const deleteDqacMeetingMinutes = async (departmentId, year, docId) => {
+  try {
+    const docRef = doc(db, "department", departmentId, "people", "DQAC", "years", year, "meetingMinutes", docId);
+    await deleteDoc(docRef);
+    // TODO: Delete file from storage if needed, using stored path
+  } catch (error) {
+    console.error("Error deleting DQAC meeting minutes:", error);
+    throw error;
+  }
+};
