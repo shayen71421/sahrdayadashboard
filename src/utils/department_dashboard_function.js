@@ -1,5 +1,5 @@
 import { db, storage } from "./firebase.js";
-import { doc, getDoc, updateDoc, arrayUnion, arrayRemove, collection, getDocs , deleteDoc, setDoc, deleteField, query, where  } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, arrayUnion, arrayRemove, collection, getDocs , deleteDoc, setDoc, deleteField, query, where , addDoc  } from 'firebase/firestore';
 import { ref, uploadBytes, uploadBytesResumable , getDownloadURL, deleteObject } from "firebase/storage";
 
 
@@ -1550,3 +1550,38 @@ export const deleteBosMeetingMinutes = async (departmentId, year, docId) => {
     throw error;
   }
 };
+
+// Add new TLM
+export async function addTlm(departmentId, tlmData) {
+  const collectionRef = collection(db, "department", departmentId, "TLMs");
+  await addDoc(collectionRef, tlmData);
+}
+
+// Update TLM by id
+export async function updateTlm(departmentId, tlmId, updatedData) {
+  const docRef = doc(db, "department", departmentId, "TLMs", tlmId);
+  await updateDoc(docRef, updatedData);
+}
+
+// Fetch all TLMs for a department
+export async function fetchTlms(departmentId) {
+  const collectionRef = collection(db, "department", departmentId, "TLMs");
+  const snapshot = await getDocs(collectionRef);
+  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+}
+
+// Delete TLM by id
+export async function deleteTlm(departmentId, tlmId) {
+  const docRef = doc(db, "department", departmentId, "TLMs", tlmId);
+  await deleteDoc(docRef);
+}
+
+// Upload TLM pdf to storage, return URL
+export async function uploadTlmPdf(departmentId, file , tlmtitle) {
+  // Save the file with its original name under department's TLM folder
+  const storagePath = `${departmentId}/TLM/${tlmtitle}`;
+  const storageRef = ref(storage, storagePath);
+  const uploadTask = uploadBytesResumable(storageRef, file);
+  await uploadTask;
+  return await getDownloadURL(uploadTask.snapshot.ref);
+}

@@ -6,7 +6,7 @@ import {
   removePoPsoPeoItem,
   updatePoPsoPeoItem,
  addPoPsoPeoItem,
-} from "../../../../utils/department_dashboard_function";
+} from "@/utils/department_dashboard_function";
 import { DepartmentContext } from "../layout";
 
 interface PoPsoPeoData {
