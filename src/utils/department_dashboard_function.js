@@ -1161,7 +1161,7 @@ export const deleteDacYear = async (departmentId, year) => {
 /**
  * Upload DAC Constitution PDF for a specific year.
  */
-export async function uploadConstitutionPdf(departmentId, year, file) {
+export async function uploadDacConstitutionPdf(departmentId, year, file) {
   try {
     const storagePath = `${departmentId}/people/DAC/years/${year}/constitution.pdf`;
     const storageRef = ref(storage, storagePath);
@@ -1184,7 +1184,7 @@ export async function uploadConstitutionPdf(departmentId, year, file) {
 /**
  * Upload DAC Meeting Minutes PDF for a specific year and document ID.
  */
-export async function uploadMeetingMinutesPdf(departmentId, year, docId, file) {
+export async function uploadDacMeetingMinutesPdf(departmentId, year, docId, file) {
   try {
     const storagePath = `${departmentId}/people/DAC/years/${year}/meetingMinutes/${docId}.pdf`;
     const storageRef = ref(storage, storagePath);
@@ -1208,7 +1208,7 @@ export async function uploadMeetingMinutesPdf(departmentId, year, docId, file) {
 /**
  * Fetch constitution PDF metadata for a year.
  */
-export async function fetchConstitution(departmentId, year) {
+export async function fetchDacConstitution(departmentId, year) {
   const docRef = doc(db, "department", departmentId, "people", "DAC", "years", year, "constitution", "doc");
   const docSnap = await getDoc(docRef);
   if (docSnap.exists()) return docSnap.data();
@@ -1218,7 +1218,7 @@ export async function fetchConstitution(departmentId, year) {
 /**
  * Fetch all meeting minutes docs for a year.
  */
-export async function fetchMeetingMinutes(departmentId, year) {
+export async function fetchDacMeetingMinutes(departmentId, year) {
   const minutesColRef = collection(db, "department", departmentId, "people", "DAC", "years", year, "meetingMinutes");
   const snapshot = await getDocs(minutesColRef);
   return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -1227,7 +1227,7 @@ export async function fetchMeetingMinutes(departmentId, year) {
 /**
  * Delete constitution PDF metadata and storage file for a year (optional: add storage deletion).
  */
-export async function deleteConstitution(departmentId, year) {
+export async function deleteDacConstitution(departmentId, year) {
   const docRef = doc(db, "department", departmentId, "people", "DAC", "years", year, "constitution", "doc");
   await deleteDoc(docRef);
   // TODO: optionally delete storage file using storagePath stored previously
@@ -1236,7 +1236,7 @@ export async function deleteConstitution(departmentId, year) {
 /**
  * Delete a meeting minutes document.
  */
-export async function deleteMeetingMinutes(departmentId, year, docId) {
+export async function deleteDacMeetingMinutes(departmentId, year, docId) {
   const docRef = doc(db, "department", departmentId, "people", "DAC", "years", year, "meetingMinutes", docId);
   await deleteDoc(docRef);
   // TODO: optionally delete storage file using storagePath stored previously

@@ -12,12 +12,12 @@ import {
   fetchDacYears,
   addDacYear,
   deleteDacYear,
-  fetchConstitution,
-  uploadConstitutionPdf,
-  deleteConstitution,
-  fetchMeetingMinutes,
-  uploadMeetingMinutesPdf,
-  deleteMeetingMinutes,
+  fetchDacConstitution,
+  uploadDacConstitutionPdf,
+  deleteDacConstitution,
+  fetchDacMeetingMinutes,
+  uploadDacMeetingMinutesPdf,
+  deleteDacMeetingMinutes,
 } from "@/utils/department_dashboard_function";
 
 export default function DACPage() {
@@ -84,8 +84,8 @@ export default function DACPage() {
     const loadYearDocs = async () => {
       try {
         const [constitution, minutes] = await Promise.all([
-          fetchConstitution(departmentId, selectedYear),
-          fetchMeetingMinutes(departmentId, selectedYear),
+          fetchDacConstitution(departmentId, selectedYear),
+          fetchDacMeetingMinutes(departmentId, selectedYear),
         ]);
         setConstitutionDoc(constitution);
         setMeetingMinutes(minutes);
@@ -150,8 +150,8 @@ export default function DACPage() {
     if (!constitutionFile || !selectedYear) return;
     setUploadingConstitution(true);
     try {
-      await uploadConstitutionPdf(departmentId, selectedYear, constitutionFile);
-      const updatedConstitution = await fetchConstitution(departmentId, selectedYear);
+      await uploadDacConstitutionPdf(departmentId, selectedYear, constitutionFile);
+      const updatedConstitution = await fetchDacConstitution(departmentId, selectedYear);
       setConstitutionDoc(updatedConstitution);
       setConstitutionFile(null);
     } catch {
@@ -164,7 +164,7 @@ export default function DACPage() {
   const handleDeleteConstitution = async () => {
     if (!selectedYear) return;
     try {
-      await deleteConstitution(departmentId, selectedYear);
+      await deleteDacConstitution(departmentId, selectedYear);
       setConstitutionDoc(null);
     } catch {
       setError("Failed to delete constitution PDF.");
@@ -179,8 +179,8 @@ export default function DACPage() {
     }
     setUploadingMinutes(true);
     try {
-      await uploadMeetingMinutesPdf(departmentId, selectedYear, newMinutesDocId, minutesFile);
-      const updatedMinutes = await fetchMeetingMinutes(departmentId, selectedYear);
+      await uploadDacMeetingMinutesPdf(departmentId, selectedYear, newMinutesDocId, minutesFile);
+      const updatedMinutes = await fetchDacMeetingMinutes(departmentId, selectedYear);
       setMeetingMinutes(updatedMinutes);
       setMinutesFile(null);
       setNewMinutesDocId("");
@@ -194,7 +194,7 @@ export default function DACPage() {
   const handleDeleteMeetingMinutes = async (docId: string) => {
     if (!selectedYear) return;
     try {
-      await deleteMeetingMinutes(departmentId, selectedYear, docId);
+      await deleteDacMeetingMinutes(departmentId, selectedYear, docId);
       setMeetingMinutes((prev) => prev.filter((doc) => doc.id !== docId));
     } catch {
       setError("Failed to delete meeting minutes PDF.");
