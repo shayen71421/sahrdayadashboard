@@ -1585,3 +1585,96 @@ export async function uploadTlmPdf(departmentId, file , tlmtitle) {
   await uploadTask;
   return await getDownloadURL(uploadTask.snapshot.ref);
 }
+
+
+export async function fetchAssociationMain(departmentId) {
+  const docRef = doc(db, "department", departmentId, "association", "main");
+  const snapshot = await getDoc(docRef);
+  if (snapshot.exists()) {
+    return snapshot.data();
+  }
+  return null;
+}
+
+export async function saveAssociationMain(departmentId, data) {
+  const docRef = doc(db, "department", departmentId, "association", "main");
+  await setDoc(docRef, data, { merge: true });
+}
+
+/**
+ * Fetch all event years for a department.
+ */
+export async function fetchEventYears(departmentId) {
+  const yearsCol = collection(db, "department", departmentId, "events_years");
+  const snap = await getDocs(yearsCol);
+  return snap.docs.map(doc => doc.id);
+}
+
+/**
+ * Add a new event year for a department.
+ */
+export async function addEventYear(departmentId, year) {
+  const docRef = doc(db, "department", departmentId, "events_years", year);
+  await setDoc(docRef, {}); // Empty document, can be extended for metadata
+}
+
+/**
+ * Delete an event year for a department.
+ * Note: This only deletes the year doc (not events in subcollection).
+ */
+export async function deleteEventYear(departmentId, year) {
+  const docRef = doc(db, "department", departmentId, "events_years", year);
+  await deleteDoc(docRef);
+}
+
+/**
+ * Fetch all event items for a given department and academic year.
+ */
+export async function fetchEvents(departmentId, year) {
+  const eventsCol = collection(db, "department", departmentId, "events_years", year, "items");
+  const snap = await getDocs(eventsCol);
+  return snap.docs.map(d => ({
+    id: d.id,
+    name: d.data().name || "",
+    type: d.data().type || "",
+    date: d.data().date || "",
+    pdfUrl: d.data().pdfUrl || ""
+  }));
+}
+
+/**
+ * Add a new event under an academic year.
+ */
+export async function addEvent(departmentId, year, eventData) {
+  const eventsCol = collection(db, "department", departmentId, "events_years", year, "items");
+  await addDoc(eventsCol, eventData);
+}
+
+/**
+ * Update an existing event by ID.
+ */
+export async function updateEvent(departmentId, year, eventId, updatedData) {
+  const docRef = doc(db, "department", departmentId, "events_years", year, "items", eventId);
+  await updateDoc(docRef, updatedData);
+}
+
+/**
+ * Delete an event by ID under an academic year.
+ */
+export async function deleteEvent(departmentId, year, eventId) {
+  const docRef = doc(db, "department", departmentId, "events_years", year, "items", eventId);
+  await deleteDoc(docRef);
+}
+
+/**
+ * Upload an event PDF and return its public download URL.
+ */
+export async function uploadEventPdf(departmentId, year, eventName, file) {
+  const safeName = eventName.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-");
+  const filename = safeName.endsWith(".pdf") ? safeName : safeName + ".pdf";
+  const path = `${departmentId}/events/${year}/${filename}`;
+  const storageRef = ref(storage, path);
+  const uploadTask = uploadBytesResumable(storageRef, file);
+  await uploadTask;
+  return await getDownloadURL(uploadTask.snapshot.ref);
+}

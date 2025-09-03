@@ -146,6 +146,27 @@ const DepartmentDashboardLayout = ({ children, params }: LayoutProps) => {
                 </li>
               </ul>
             </li>
+            <li>
+              <span className="block px-3 py-2 text-gray-500 font-medium">Association</span>
+              <ul className="ml-4 mt-2 space-y-2">
+                <li>
+                  <Link
+                    href={`/department-dashboard/${departmentId}/association/main`}
+                    className="block rounded-md px-3 py-2 text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                  >
+                    Main Page
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    href={`/department-dashboard/${departmentId}/association/sub`}
+                    className="block rounded-md px-3 py-2 text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                  >
+                    Evnets Organized
+                  </Link>
+                </li>
+              </ul>
+            </li>
           </ul>
         </nav>
       </aside>
