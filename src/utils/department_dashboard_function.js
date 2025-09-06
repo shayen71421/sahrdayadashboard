@@ -1768,3 +1768,46 @@ export async function uploadStatsPdf(departmentId, year, file) {
   await uploadTask;
   return await getDownloadURL(uploadTask.snapshot.ref);
 }
+
+
+
+/**
+ * Add an industry partner (optionally with logoFile)
+ */
+export async function addIndustryPartner(departmentId, { name, sector, role, logoFile }) {
+  let logoUrl = "";
+  if (logoFile) {
+    const safeName = name.trim().replace(/[^a-z0-9]+/gi, "-").toLowerCase();
+    const filename = `${safeName}-${Date.now()}.png`;
+    const path = `department/${departmentId}/placement/main/industry_partners/${filename}`;
+    const storageRef = ref(storage, path);
+    const uploadTask = uploadBytesResumable(storageRef, logoFile);
+    await uploadTask;
+    logoUrl = await getDownloadURL(uploadTask.snapshot.ref);
+  }
+
+  const colRef = collection(db, "department", departmentId, "placement", "main", "industry_partners");
+  const docRef = await addDoc(colRef, { name, sector, role, logoUrl });
+  console.log("Added partner with ID:", docRef.id);
+  return docRef.id;
+}
+
+/**
+ * Delete industry partner by document id
+ */
+export async function fetchIndustryPartners(departmentId) {
+  const colRef = collection(db, "department", departmentId, "placement", "main", "industry_partners");
+  const snap = await getDocs(colRef);
+  return snap.docs.map(doc => ({
+    id: doc.id,
+    name: doc.data().name || "",
+    sector: doc.data().sector || "",
+    role: doc.data().role || "",
+    logoUrl: doc.data().logoUrl || ""
+  }));
+}
+
+export async function deleteIndustryPartner(departmentId, partnerId) {
+  const docRef = doc(db, "department", departmentId, "placement", "main", "industry_partners", partnerId);
+  await deleteDoc(docRef);
+}

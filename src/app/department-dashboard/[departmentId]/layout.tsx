@@ -180,10 +180,10 @@ const DepartmentDashboardLayout = ({ children, params }: LayoutProps) => {
                 </li>
                 <li>
                   <Link
-                    href={`/department-dashboard/${departmentId}/association/sub`}
+                    href={`/department-dashboard/${departmentId}/placement/industry_partners`}
                     className="block rounded-md px-3 py-2 text-gray-600 hover:bg-gray-100 hover:text-gray-900"
                   >
-                    Evnets Organized
+                    Industry Partners
                   </Link>
                 </li>
               </ul>
