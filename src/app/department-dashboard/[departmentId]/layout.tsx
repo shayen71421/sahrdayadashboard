@@ -186,6 +186,14 @@ const DepartmentDashboardLayout = ({ children, params }: LayoutProps) => {
                     Industry Partners
                   </Link>
                 </li>
+                <li>
+                  <Link
+                    href={`/department-dashboard/${departmentId}/placement/alumini_network`}
+                    className="block rounded-md px-3 py-2 text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                  >
+                    Alumini Network
+                  </Link>
+                </li>
               </ul>
             </li>
           </ul>

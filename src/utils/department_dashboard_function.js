@@ -1700,7 +1700,7 @@ export async function uploadEventPdf(departmentId, year, eventName, file) {
  * Fetch placement overview (single doc inside department)
  */
 export async function fetchPlacementOverview(departmentId) {
-  const docRef = doc(db, "department", departmentId, "placementStats", "overview");
+  const docRef = doc(db, "department", departmentId, "placement", "overview");
   const snap = await getDoc(docRef);
   return snap.exists()
     ? /** @type {PlacementOverview} */ ({
@@ -1715,15 +1715,15 @@ export async function fetchPlacementOverview(departmentId) {
  * Update placement overview
  */
 export async function updatePlacementOverview(departmentId, data) {
-  const docRef = doc(db, "department", departmentId, "placementStats", "overview");
+  const docRef = doc(db, "department", departmentId, "placement", "overview");
   await setDoc(docRef, data, { merge: true });
 }
 
 /**
- * Fetch year wise stats: subcollection "years" inside placementStats
+ * Fetch year wise stats: subcollection "years" inside placement
  */
 export async function fetchPlacementYears(departmentId) {
-  const colRef = collection(db, "department", departmentId, "placementStats", "overview", "years");
+  const colRef = collection(db, "department", departmentId, "placement", "overview", "years");
   const snap = await getDocs(colRef);
   return snap.docs.map(
     (docSnap) =>
@@ -1742,7 +1742,7 @@ export async function fetchPlacementYears(departmentId) {
  * Add a new placement year
  */
 export async function addPlacementYear(departmentId, yearData) {
-  const colRef = collection(db, "department", departmentId, "placementStats", "overview", "years");
+  const colRef = collection(db, "department", departmentId, "placement", "overview", "years");
   await addDoc(colRef, yearData);
 }
 
@@ -1751,7 +1751,7 @@ export async function addPlacementYear(departmentId, yearData) {
  */
 export async function deletePlacementYear(departmentId, yearId) {
   // Construct document reference with 7 segments: collection/doc/collection/doc/collection/doc/id (odd segments = collections)
-  const docRef = doc(db, "department", departmentId, "placementStats", "overview", "years", yearId);
+  const docRef = doc(db, "department", departmentId, "placement", "overview", "years", yearId);
   await deleteDoc(docRef);
 }
 
@@ -1779,7 +1779,7 @@ export async function addIndustryPartner(departmentId, { name, sector, role, log
   if (logoFile) {
     const safeName = name.trim().replace(/[^a-z0-9]+/gi, "-").toLowerCase();
     const filename = `${safeName}-${Date.now()}.png`;
-    const path = `department/${departmentId}/placement/main/industry_partners/${filename}`;
+    const path = `${departmentId}/placement/main/industry_partners/${filename}`;
     const storageRef = ref(storage, path);
     const uploadTask = uploadBytesResumable(storageRef, logoFile);
     await uploadTask;
@@ -1809,5 +1809,42 @@ export async function fetchIndustryPartners(departmentId) {
 
 export async function deleteIndustryPartner(departmentId, partnerId) {
   const docRef = doc(db, "department", departmentId, "placement", "main", "industry_partners", partnerId);
+  await deleteDoc(docRef);
+}
+export async function fetchAlumni(departmentId) {
+  const colRef = collection(db, "department", departmentId, "placement", "main", "alumni_network");
+  const snap = await getDocs(colRef);
+  return snap.docs.map(docSnap => ({
+    id: docSnap.id,
+    name: docSnap.data().name || "",
+    batch: docSnap.data().batch || "",
+    position: docSnap.data().position || "",
+    company: docSnap.data().company || "",
+    photoUrl: docSnap.data().photoUrl || ""
+  }));
+}
+
+/**
+ * Add an alumni. If photoFile provided, upload and store photoUrl.
+ */
+export async function addAlumni(departmentId, { name, batch, position, company, photoFile }) {
+  let photoUrl = "";
+  if (photoFile) {
+    const safeName = name.trim().replace(/[^a-z0-9]+/gi, "-").toLowerCase();
+    const path = `${departmentId}/placement/alumni_network/${safeName}-${Date.now()}.jpg`;
+    const storageRef = ref(storage, path);
+    const uploadTask = uploadBytesResumable(storageRef, photoFile);
+    await uploadTask;
+    photoUrl = await getDownloadURL(uploadTask.snapshot.ref);
+  }
+  const colRef = collection(db, "department", departmentId, "placement", "main", "alumni_network");
+  await addDoc(colRef, { name, batch, position, company, photoUrl });
+}
+
+/**
+ * Delete alumni by document id
+ */
+export async function deleteAlumni(departmentId, alumniId) {
+  const docRef = doc(db, "department", departmentId, "placement", "main", "alumni_network", alumniId);
   await deleteDoc(docRef);
 }
