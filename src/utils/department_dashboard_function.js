@@ -1678,3 +1678,93 @@ export async function uploadEventPdf(departmentId, year, eventName, file) {
   await uploadTask;
   return await getDownloadURL(uploadTask.snapshot.ref);
 }
+/**
+ * @typedef {Object} PlacementOverview
+ * @property {string} averageRate
+ * @property {string} highestPackage
+ * @property {string} companiesVisited
+ */
+
+/**
+ * @typedef {Object} YearStat
+ * @property {string} id
+ * @property {string} academicYear
+ * @property {string} studentsPlaced
+ * @property {string} placementPercent
+ * @property {string} topRecruiters
+ * @property {string} [pdfUrl]
+ */
+
+
+/**
+ * Fetch placement overview (single doc inside department)
+ */
+export async function fetchPlacementOverview(departmentId) {
+  const docRef = doc(db, "department", departmentId, "placementStats", "overview");
+  const snap = await getDoc(docRef);
+  return snap.exists()
+    ? /** @type {PlacementOverview} */ ({
+        averageRate: snap.data().averageRate ?? "",
+        highestPackage: snap.data().highestPackage ?? "",
+        companiesVisited: snap.data().companiesVisited ?? "",
+      })
+    : { averageRate: "", highestPackage: "", companiesVisited: "" };
+}
+
+/**
+ * Update placement overview
+ */
+export async function updatePlacementOverview(departmentId, data) {
+  const docRef = doc(db, "department", departmentId, "placementStats", "overview");
+  await setDoc(docRef, data, { merge: true });
+}
+
+/**
+ * Fetch year wise stats: subcollection "years" inside placementStats
+ */
+export async function fetchPlacementYears(departmentId) {
+  const colRef = collection(db, "department", departmentId, "placementStats", "overview", "years");
+  const snap = await getDocs(colRef);
+  return snap.docs.map(
+    (docSnap) =>
+      /** @type {YearStat} */ ({
+        id: docSnap.id,
+        academicYear: docSnap.data().academicYear ?? "",
+        studentsPlaced: docSnap.data().studentsPlaced ?? "",
+        placementPercent: docSnap.data().placementPercent ?? "",
+        topRecruiters: docSnap.data().topRecruiters ?? "",
+        pdfUrl: docSnap.data().pdfUrl ?? "",
+      })
+  );
+}
+
+/**
+ * Add a new placement year
+ */
+export async function addPlacementYear(departmentId, yearData) {
+  const colRef = collection(db, "department", departmentId, "placementStats", "overview", "years");
+  await addDoc(colRef, yearData);
+}
+
+/**
+ * Delete a placement year document
+ */
+export async function deletePlacementYear(departmentId, yearId) {
+  // Construct document reference with 7 segments: collection/doc/collection/doc/collection/doc/id (odd segments = collections)
+  const docRef = doc(db, "department", departmentId, "placementStats", "overview", "years", yearId);
+  await deleteDoc(docRef);
+}
+
+
+/**
+ * Upload a PDF for a given year inside department folder
+ */
+export async function uploadStatsPdf(departmentId, year, file) {
+  const safeYear = year.trim().replace(/[^a-z0-9-]/gi, "-");
+  const filename = safeYear + ".pdf";
+  const path = `${departmentId}/placement/${safeYear}/${filename}`;
+  const storageRef = ref(storage, path);
+  const uploadTask = uploadBytesResumable(storageRef, file);
+  await uploadTask;
+  return await getDownloadURL(uploadTask.snapshot.ref);
+}
