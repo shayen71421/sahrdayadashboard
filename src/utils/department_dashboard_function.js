@@ -1848,3 +1848,44 @@ export async function deleteAlumni(departmentId, alumniId) {
   const docRef = doc(db, "department", departmentId, "placement", "main", "alumni_network", alumniId);
   await deleteDoc(docRef);
 }
+
+
+
+export async function fetchFDPs(departmentId) {
+  const colRef = collection(db, "department", departmentId, "activities", "main", "fdp");
+  const snap = await getDocs(colRef);
+  return snap.docs.map(docSnap => ({
+    id: docSnap.id,
+    title: docSnap.data().title || "",
+    date: docSnap.data().date || "",
+    duration: docSnap.data().duration || "",
+    participants: docSnap.data().participants || "",
+    pdfUrl: docSnap.data().pdfUrl || ""
+  }));
+}
+
+/**
+ * Add an FDP entry. If pdfFile provided, upload and set pdfUrl.
+ */
+export async function addFDP(departmentId, { title, date, duration, participants, pdfFile }) {
+  let pdfUrl = "";
+  if (pdfFile) {
+    const safeTitle = title.trim().replace(/[^a-z0-9]+/gi, "-").toLowerCase();
+    const filename = `${safeTitle}-${Date.now()}.pdf`;
+    const path = `${departmentId}/activities/fdp/${filename}`;
+    const storageRef = ref(storage, path);
+    const uploadTask = uploadBytesResumable(storageRef, pdfFile);
+    await uploadTask;
+    pdfUrl = await getDownloadURL(uploadTask.snapshot.ref);
+  }
+  const colRef = collection(db, "department", departmentId, "activities", "main", "fdp");
+  await addDoc(colRef, { title, date, duration, participants, pdfUrl });
+}
+
+/**
+ * Delete FDP by doc id
+ */
+export async function deleteFDP(departmentId, fdpId) {
+  const docRef = doc(db, "department", departmentId, "activities", "main", "fdp", fdpId);
+  await deleteDoc(docRef);
+}
