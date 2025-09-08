@@ -1889,3 +1889,43 @@ export async function deleteFDP(departmentId, fdpId) {
   const docRef = doc(db, "department", departmentId, "activities", "main", "fdp", fdpId);
   await deleteDoc(docRef);
 }
+
+export async function fetchWorkshopsSeminars(departmentId) {
+  const colRef = collection(db, "department", departmentId, "activities", "main", "workshops_seminars");
+  const snap = await getDocs(colRef);
+  return snap.docs.map(docSnap => ({
+    id: docSnap.id,
+    title: docSnap.data().title || "",
+    type: docSnap.data().type || "Workshop", // default
+    date: docSnap.data().date || "",
+    speaker: docSnap.data().speaker || "",
+    topic: docSnap.data().topic || "",
+    pdfUrl: docSnap.data().pdfUrl || "",
+  }));
+}
+
+/**
+ * Add workshop or seminar entry. If pdfFile, upload and set pdfUrl.
+ */
+export async function addWorkshopSeminar(departmentId, { title, type, date, speaker, topic, pdfFile }) {
+  let pdfUrl = "";
+  if (pdfFile) {
+    const safeTitle = title.trim().replace(/[^a-z0-9]+/gi, "-").toLowerCase();
+    const filename = `${safeTitle}-${Date.now()}.pdf`;
+    const path = `${departmentId}/activities/workshops_seminars/${filename}`;
+    const storageRef = ref(storage, path);
+    const uploadTask = uploadBytesResumable(storageRef, pdfFile);
+    await uploadTask;
+    pdfUrl = await getDownloadURL(uploadTask.snapshot.ref);
+  }
+  const colRef = collection(db, "department", departmentId, "activities", "main", "workshops_seminars");
+  await addDoc(colRef, { title, type, date, speaker, topic, pdfUrl });
+}
+
+/**
+ * Delete workshop or seminar by document id
+ */
+export async function deleteWorkshopSeminar(departmentId, wsId) {
+  const docRef = doc(db, "department", departmentId, "activities", "main", "workshops_seminars", wsId);
+  await deleteDoc(docRef);
+}
