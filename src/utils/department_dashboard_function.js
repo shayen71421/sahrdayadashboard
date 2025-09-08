@@ -1929,3 +1929,41 @@ export async function deleteWorkshopSeminar(departmentId, wsId) {
   const docRef = doc(db, "department", departmentId, "activities", "main", "workshops_seminars", wsId);
   await deleteDoc(docRef);
 }
+
+export async function fetchCertifications(departmentId) {
+  const colRef = collection(db, "department", departmentId, "activities", "main", "certifications");
+  const snap = await getDocs(colRef);
+  return snap.docs.map(docSnap => ({
+    id: docSnap.id,
+    name: docSnap.data().name || "",
+    provider: docSnap.data().provider || "",
+    duration: docSnap.data().duration || "",
+    level: docSnap.data().level || "",
+    pdfUrl: docSnap.data().pdfUrl || "",
+  }));
+}
+
+/**
+ * Add a certification (optional PDF)
+ */
+export async function addCertification(departmentId, { name, provider, duration, level, pdfFile }) {
+  let pdfUrl = "";
+  if (pdfFile) {
+    const safeName = name.trim().replace(/[^a-z0-9]+/gi, "-").toLowerCase();
+    const pdfPath = `${departmentId}/activities/certifications/${safeName}-${Date.now()}.pdf`;
+    const pdfRef = ref(storage, pdfPath);
+    const uploadTask = uploadBytesResumable(pdfRef, pdfFile);
+    await uploadTask;
+    pdfUrl = await getDownloadURL(uploadTask.snapshot.ref);
+  }
+  const colRef = collection(db, "department", departmentId, "activities", "main", "certifications");
+  await addDoc(colRef, { name, provider, duration, level, pdfUrl });
+}
+
+/**
+ * Delete certification by doc id
+ */
+export async function deleteCertification(departmentId, certId) {
+  const docRef = doc(db, "department", departmentId, "activities", "main", "certifications", certId);
+  await deleteDoc(docRef);
+}
