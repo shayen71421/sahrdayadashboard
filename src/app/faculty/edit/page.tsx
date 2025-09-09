@@ -356,9 +356,32 @@ const FacultyEditPage: React.FC = () => {
         setProfilePictureFile(null);
       }
       
+      // Filter out empty values
+      const cleanData = Object.fromEntries(
+        Object.entries(updatedFacultyData).map(([key, value]) => {
+          if (Array.isArray(value)) {
+            // Filter out empty objects from arrays
+            const filteredArray = value.filter(item => {
+              if (typeof item === 'object' && item !== null) {
+                return Object.values(item).some(val => val !== '' && val !== null && val !== undefined);
+              }
+              return item !== '' && item !== null && item !== undefined;
+            });
+            return [key, filteredArray];
+          } else if (typeof value === 'string') {
+            // Only include non-empty strings
+            return value.trim() !== '' ? [key, value] : [key, ''];
+          }
+          return [key, value];
+        }).filter(([key, value]) => {
+          // Remove empty string values but keep other falsy values like 0 or false
+          return !(typeof value === 'string' && value === '');
+        })
+      );
+      
       const docRef = doc(db, "faculty", user.email);
-      await setDoc(docRef, updatedFacultyData);
-      setFacultyData(updatedFacultyData);
+      await setDoc(docRef, cleanData);
+      setFacultyData(cleanData);
       alert("Data saved successfully!");
     } catch (error) {
       console.error("Error saving data:", error);
