@@ -574,23 +574,33 @@ const FacultyEditPage: React.FC = () => {
             </div>
             <div>
               <label style={{ display: 'block', marginBottom: 4, fontWeight: 500 }}>Department</label>
-              <input
-                type="text"
+              <select
                 value={facultyData.department}
                 onChange={e => setFacultyData(prev => ({ ...prev, department: e.target.value }))}
-                style={{ width: '100%', padding: 8, border: '1px solid #888', borderRadius: 4 }}
-                placeholder="e.g., Computer Science & Engineering"
-              />
+                style={{ width: '100%', padding: 8, border: '1px solid #888', borderRadius: 4, background: '#fff' }}
+              >
+                <option value="">Select Department</option>
+                <option value="Computer Science Engineering">Computer Science Engineering</option>
+                <option value="Electrical and Electronics Engineering">Electrical and Electronics Engineering</option>
+                <option value="Electronics and Communication Engineering">Electronics and Communication Engineering</option>
+                <option value="Civil Engineering">Civil Engineering</option>
+                <option value="Biomedical Engineering">Biomedical Engineering</option>
+                <option value="Biotechnology Engineering">Biotechnology Engineering</option>
+              </select>
             </div>
             <div>
               <label style={{ display: 'block', marginBottom: 4, fontWeight: 500 }}>Position</label>
-              <input
-                type="text"
+              <select
                 value={facultyData.position}
                 onChange={e => setFacultyData(prev => ({ ...prev, position: e.target.value }))}
-                style={{ width: '100%', padding: 8, border: '1px solid #888', borderRadius: 4 }}
-                placeholder="e.g., Associate Professor, Head of Department"
-              />
+                style={{ width: '100%', padding: 8, border: '1px solid #888', borderRadius: 4, background: '#fff' }}
+              >
+                <option value="">Select Position</option>
+                <option value="Head of Department">Head of Department</option>
+                <option value="Assistant HOD">Assistant HOD</option>
+                <option value="Associate Professor">Associate Professor</option>
+                <option value="Assistant Professor">Assistant Professor</option>
+              </select>
             </div>
             <div>
               <label style={{ display: 'block', marginBottom: 4, fontWeight: 500 }}>Mail ID</label>
