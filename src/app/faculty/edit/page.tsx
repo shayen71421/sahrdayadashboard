@@ -344,9 +344,39 @@ const FacultyEditPage: React.FC = () => {
     return await getDownloadURL(storageRef);
   };
 
-  const handleProfilePictureChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const validateImage = (file: File): Promise<{ isValid: boolean; error?: string }> => {
+    return new Promise((resolve) => {
+      // Check file size (500KB = 500 * 1024 bytes)
+      const maxSize = 500 * 1024;
+      if (file.size > maxSize) {
+        resolve({ isValid: false, error: "File size must be under 500KB" });
+        return;
+      }
+
+      // Check if it's an image
+      if (!file.type.startsWith('image/')) {
+        resolve({ isValid: false, error: "Please select a valid image file" });
+        return;
+      }
+
+      resolve({ isValid: true });
+    });
+  };
+
+  const handleProfilePictureChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      setProfilePictureFile(e.target.files[0]);
+      const file = e.target.files[0];
+      
+      const validation = await validateImage(file);
+      if (!validation.isValid) {
+        alert(validation.error);
+        // Reset the input
+        e.target.value = '';
+        setProfilePictureFile(null);
+        return;
+      }
+      
+      setProfilePictureFile(file);
     }
   };
 
@@ -534,7 +564,7 @@ const FacultyEditPage: React.FC = () => {
               </p>
             )}
             <p style={{ fontSize: 12, color: '#999' }}>
-              Supported formats: JPG, PNG, GIF. Max size: 5MB
+              Requirements: Under 500KB. Supported formats: JPG, PNG, GIF
             </p>
           </div>
         </div>
