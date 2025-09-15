@@ -16,12 +16,18 @@ interface Education {
   degree: string;
   field: string;
   institution: string;
+  year?: string;
 }
 
 interface EmploymentHistory {
   organization: string;
   position: string;
-  timeperiod: string;
+  year?: string;
+}
+
+interface Membership {
+  name: string;
+  year?: string;
 }
 
 interface Award {
@@ -42,7 +48,7 @@ interface ResearchProject {
   title: string;
   status: string;
   fundingagency: string;
-  duration: string;
+  year?: string;
   role: string;
 }
 
@@ -51,6 +57,7 @@ interface DoctoralStudent {
   status: string;
   title: string;
   organization: string;
+  year?: string;
 }
 
 interface BookChapter {
@@ -92,7 +99,7 @@ interface FacultyData {
   contact: Contact;
   education: Education[];
   employmenthistory: EmploymentHistory[];
-  memberships: string[];
+  memberships: Membership[];
   awards: Award[];
   publications: Publication[];
   researchprojects: ResearchProject[];
@@ -116,10 +123,15 @@ interface FacultyData {
 const generateYearOptions = () => {
   const currentYear = new Date().getFullYear();
   const years = [];
-  for (let year = currentYear; year >= 1980; year--) {
+  for (let year = currentYear + 10; year >= 1970; year--) {
     years.push(year.toString());
   }
   return years;
+};
+
+const generateEndYearOptions = () => {
+  const years = generateYearOptions();
+  return ['Present', ...years];
 };
 
 const FacultyEditPage: React.FC = () => {
@@ -142,13 +154,13 @@ const FacultyEditPage: React.FC = () => {
     aicteId: "",
     biography: "",
     contact: { email: "", office: "", phone: "" },
-    education: [{ degree: "", field: "", institution: "" }],
-    employmenthistory: [{ organization: "", position: "", timeperiod: "" }],
-    memberships: [""],
+    education: [{ degree: "", field: "", institution: "", year: "" }],
+    employmenthistory: [{ organization: "", position: "", year: "" }],
+    memberships: [{ name: "", year: "" }],
     awards: [{ organization: "", title: "", year: "" }],
     publications: [{ type: "", year: "", title: "", subtitle: "", authors: "" }],
-    researchprojects: [{ title: "", status: "", fundingagency: "", duration: "", role: "" }],
-    doctoralStudentsGuided: [{ name: "", status: "", title: "", organization: "" }],
+    researchprojects: [{ title: "", status: "", fundingagency: "", year: "", role: "" }],
+    doctoralStudentsGuided: [{ name: "", status: "", title: "", organization: "", year: "" }],
     booksChaptersPublished: [{ title: "", author: "", year: "", isbnId: "" }],
     currentResponsibilities: [""],
     otherResponsibilities: [""],
@@ -202,13 +214,13 @@ const FacultyEditPage: React.FC = () => {
           aicteId: "",
           biography: "",
           contact: { email: "", office: "", phone: "" },
-          education: [{ degree: "", field: "", institution: "" }],
-          employmenthistory: [{ organization: "", position: "", timeperiod: "" }],
-          memberships: [""],
+          education: [{ degree: "", field: "", institution: "", year: "" }],
+          employmenthistory: [{ organization: "", position: "", year: "" }],
+          memberships: [{ name: "", year: "" }],
           awards: [{ organization: "", title: "", year: "" }],
           publications: [{ type: "", year: "", title: "", subtitle: "", authors: "" }],
-          researchprojects: [{ title: "", status: "", fundingagency: "", duration: "", role: "" }],
-          doctoralStudentsGuided: [{ name: "", status: "", title: "", organization: "" }],
+          researchprojects: [{ title: "", status: "", fundingagency: "", year: "", role: "" }],
+          doctoralStudentsGuided: [{ name: "", status: "", title: "", organization: "", year: "" }],
           booksChaptersPublished: [{ title: "", author: "", year: "", isbnId: "" }],
           currentResponsibilities: [""],
           otherResponsibilities: [""],
@@ -293,13 +305,13 @@ const FacultyEditPage: React.FC = () => {
         aicteId: "",
         biography: "",
         contact: { email: "", office: "", phone: "" },
-        education: [{ degree: "", field: "", institution: "" }],
-        employmenthistory: [{ organization: "", position: "", timeperiod: "" }],
-        memberships: [""],
+        education: [{ degree: "", field: "", institution: "", year: "" }],
+        employmenthistory: [{ organization: "", position: "", year: "" }],
+        memberships: [{ name: "", year: "" }],
         awards: [{ organization: "", title: "", year: "" }],
         publications: [{ type: "", year: "", title: "", subtitle: "", authors: "" }],
-        researchprojects: [{ title: "", status: "", fundingagency: "", duration: "", role: "" }],
-        doctoralStudentsGuided: [{ name: "", status: "", title: "", organization: "" }],
+        researchprojects: [{ title: "", status: "", fundingagency: "", year: "", role: "" }],
+        doctoralStudentsGuided: [{ name: "", status: "", title: "", organization: "", year: "" }],
         booksChaptersPublished: [{ title: "", author: "", year: "", isbnId: "" }],
         currentResponsibilities: [""],
         otherResponsibilities: [""],
@@ -455,11 +467,27 @@ const FacultyEditPage: React.FC = () => {
     }));
   };
 
-  const updateMembership = (index: number, value: string) => {
-    setFacultyData(prev => ({
-      ...prev,
-      memberships: prev.memberships.map((item, i) => i === index ? value : item)
-    }));
+  // Helper functions to handle year field
+  const updateYearField = (field: keyof FacultyData, index: number, startYear: string, endYear: string) => {
+    let yearValue = "";
+    if (startYear && endYear) {
+      yearValue = `${startYear}-${endYear}`;
+    } else if (startYear) {
+      yearValue = startYear;
+    }
+    
+    updateArrayItem(field, index, 'year', yearValue);
+  };
+
+  const parseYearField = (year: string | undefined) => {
+    if (!year) return { startYear: '', endYear: '' };
+    
+    if (year.includes('-')) {
+      const [start, end] = year.split('-');
+      return { startYear: start || '', endYear: end || '' };
+    }
+    
+    return { startYear: year, endYear: '' };
   };
 
   if (!user) {
@@ -746,13 +774,15 @@ const FacultyEditPage: React.FC = () => {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
             <h3>Education</h3>
             <button
-              onClick={() => addArrayItem('education', { degree: '', field: '', institution: '' })}
+              onClick={() => addArrayItem('education', { degree: '', field: '', institution: '', year: '' })}
               style={{ padding: '8px 16px', background: '#10b981', color: '#fff', border: 'none', borderRadius: 4 }}
             >
               Add Education
             </button>
           </div>
-          {facultyData.education.map((edu, index) => (
+          {facultyData.education.map((edu, index) => {
+            const { startYear, endYear } = parseYearField(edu.year);
+            return (
             <div key={index} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16, marginBottom: 16, padding: 16, border: '1px solid #d1d5db', borderRadius: 4 }}>
               <input
                 type="text"
@@ -775,6 +805,26 @@ const FacultyEditPage: React.FC = () => {
                 onChange={e => updateArrayItem('education', index, 'institution', e.target.value)}
                 style={{ padding: 8, border: '1px solid #888', borderRadius: 4 }}
               />
+              <select
+                value={startYear}
+                onChange={e => updateYearField('education', index, e.target.value, endYear)}
+                style={{ padding: 8, border: '1px solid #888', borderRadius: 4, background: '#fff' }}
+              >
+                <option value="">Start Year</option>
+                {generateYearOptions().map(year => (
+                  <option key={year} value={year}>{year}</option>
+                ))}
+              </select>
+              <select
+                value={endYear}
+                onChange={e => updateYearField('education', index, startYear, e.target.value)}
+                style={{ padding: 8, border: '1px solid #888', borderRadius: 4, background: '#fff' }}
+              >
+                <option value="">End Year</option>
+                {generateEndYearOptions().map(year => (
+                  <option key={year} value={year}>{year}</option>
+                ))}
+              </select>
               <button
                 onClick={() => removeArrayItem('education', index)}
                 style={{ padding: '8px 16px', background: '#ef4444', color: '#fff', border: 'none', borderRadius: 4 }}
@@ -782,7 +832,8 @@ const FacultyEditPage: React.FC = () => {
                 Remove
               </button>
             </div>
-          ))}
+            );
+          })}
         </div>
 
         {/* Employment History */}
@@ -790,13 +841,15 @@ const FacultyEditPage: React.FC = () => {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
             <h3>Employment History</h3>
             <button
-              onClick={() => addArrayItem('employmenthistory', { organization: '', position: '', timeperiod: '' })}
+              onClick={() => addArrayItem('employmenthistory', { organization: '', position: '', year: '' })}
               style={{ padding: '8px 16px', background: '#10b981', color: '#fff', border: 'none', borderRadius: 4 }}
             >
               Add Employment
             </button>
           </div>
-          {facultyData.employmenthistory.map((emp, index) => (
+          {facultyData.employmenthistory.map((emp, index) => {
+            const { startYear, endYear } = parseYearField(emp.year);
+            return (
             <div key={index} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16, marginBottom: 16, padding: 16, border: '1px solid #d1d5db', borderRadius: 4 }}>
               <input
                 type="text"
@@ -812,13 +865,26 @@ const FacultyEditPage: React.FC = () => {
                 onChange={e => updateArrayItem('employmenthistory', index, 'position', e.target.value)}
                 style={{ padding: 8, border: '1px solid #888', borderRadius: 4 }}
               />
-              <input
-                type="text"
-                placeholder="Time Period"
-                value={emp.timeperiod}
-                onChange={e => updateArrayItem('employmenthistory', index, 'timeperiod', e.target.value)}
-                style={{ padding: 8, border: '1px solid #888', borderRadius: 4 }}
-              />
+              <select
+                value={startYear}
+                onChange={e => updateYearField('employmenthistory', index, e.target.value, endYear)}
+                style={{ padding: 8, border: '1px solid #888', borderRadius: 4, background: '#fff' }}
+              >
+                <option value="">Start Year</option>
+                {generateYearOptions().map(year => (
+                  <option key={year} value={year}>{year}</option>
+                ))}
+              </select>
+              <select
+                value={endYear}
+                onChange={e => updateYearField('employmenthistory', index, startYear, e.target.value)}
+                style={{ padding: 8, border: '1px solid #888', borderRadius: 4, background: '#fff' }}
+              >
+                <option value="">End Year</option>
+                {generateEndYearOptions().map(year => (
+                  <option key={year} value={year}>{year}</option>
+                ))}
+              </select>
               <button
                 onClick={() => removeArrayItem('employmenthistory', index)}
                 style={{ padding: '8px 16px', background: '#ef4444', color: '#fff', border: 'none', borderRadius: 4 }}
@@ -826,7 +892,8 @@ const FacultyEditPage: React.FC = () => {
                 Remove
               </button>
             </div>
-          ))}
+            );
+          })}
         </div>
 
         {/* Memberships */}
@@ -834,29 +901,52 @@ const FacultyEditPage: React.FC = () => {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
             <h3>Memberships</h3>
             <button
-              onClick={() => setFacultyData(prev => ({ ...prev, memberships: [...prev.memberships, ''] }))}
+              onClick={() => addArrayItem('memberships', { name: '', year: '' })}
               style={{ padding: '8px 16px', background: '#10b981', color: '#fff', border: 'none', borderRadius: 4 }}
             >
               Add Membership
             </button>
           </div>
-          {facultyData.memberships.map((membership, index) => (
-            <div key={index} style={{ display: 'flex', gap: 16, marginBottom: 16 }}>
+          {facultyData.memberships.map((membership, index) => {
+            const { startYear, endYear } = parseYearField(membership.year);
+            return (
+            <div key={index} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16, marginBottom: 16, padding: 16, border: '1px solid #d1d5db', borderRadius: 4 }}>
               <input
                 type="text"
-                placeholder="Membership"
-                value={membership}
-                onChange={e => updateMembership(index, e.target.value)}
-                style={{ flex: 1, padding: 8, border: '1px solid #888', borderRadius: 4 }}
+                placeholder="Membership Name"
+                value={membership.name}
+                onChange={e => updateArrayItem('memberships', index, 'name', e.target.value)}
+                style={{ padding: 8, border: '1px solid #888', borderRadius: 4 }}
               />
+              <select
+                value={startYear}
+                onChange={e => updateYearField('memberships', index, e.target.value, endYear)}
+                style={{ padding: 8, border: '1px solid #888', borderRadius: 4, background: '#fff' }}
+              >
+                <option value="">Start Year</option>
+                {generateYearOptions().map(year => (
+                  <option key={year} value={year}>{year}</option>
+                ))}
+              </select>
+              <select
+                value={endYear}
+                onChange={e => updateYearField('memberships', index, startYear, e.target.value)}
+                style={{ padding: 8, border: '1px solid #888', borderRadius: 4, background: '#fff' }}
+              >
+                <option value="">End Year</option>
+                {generateEndYearOptions().map(year => (
+                  <option key={year} value={year}>{year}</option>
+                ))}
+              </select>
               <button
-                onClick={() => setFacultyData(prev => ({ ...prev, memberships: prev.memberships.filter((_, i) => i !== index) }))}
+                onClick={() => removeArrayItem('memberships', index)}
                 style={{ padding: '8px 16px', background: '#ef4444', color: '#fff', border: 'none', borderRadius: 4 }}
               >
                 Remove
               </button>
             </div>
-          ))}
+            );
+          })}
         </div>
 
         {/* Awards */}
@@ -972,13 +1062,15 @@ const FacultyEditPage: React.FC = () => {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
             <h3>Research Projects</h3>
             <button
-              onClick={() => addArrayItem('researchprojects', { title: '', status: '', fundingagency: '', duration: '', role: '' })}
+              onClick={() => addArrayItem('researchprojects', { title: '', status: '', fundingagency: '', year: '', role: '' })}
               style={{ padding: '8px 16px', background: '#10b981', color: '#fff', border: 'none', borderRadius: 4 }}
             >
               Add Project
             </button>
           </div>
-          {facultyData.researchprojects.map((project, index) => (
+          {facultyData.researchprojects.map((project, index) => {
+            const { startYear, endYear } = parseYearField(project.year);
+            return (
             <div key={index} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16, marginBottom: 16, padding: 16, border: '1px solid #d1d5db', borderRadius: 4 }}>
               <input
                 type="text"
@@ -1001,13 +1093,26 @@ const FacultyEditPage: React.FC = () => {
                 onChange={e => updateArrayItem('researchprojects', index, 'fundingagency', e.target.value)}
                 style={{ padding: 8, border: '1px solid #888', borderRadius: 4 }}
               />
-              <input
-                type="text"
-                placeholder="Duration"
-                value={project.duration}
-                onChange={e => updateArrayItem('researchprojects', index, 'duration', e.target.value)}
-                style={{ padding: 8, border: '1px solid #888', borderRadius: 4 }}
-              />
+              <select
+                value={startYear}
+                onChange={e => updateYearField('researchprojects', index, e.target.value, endYear)}
+                style={{ padding: 8, border: '1px solid #888', borderRadius: 4, background: '#fff' }}
+              >
+                <option value="">Start Year</option>
+                {generateYearOptions().map(year => (
+                  <option key={year} value={year}>{year}</option>
+                ))}
+              </select>
+              <select
+                value={endYear}
+                onChange={e => updateYearField('researchprojects', index, startYear, e.target.value)}
+                style={{ padding: 8, border: '1px solid #888', borderRadius: 4, background: '#fff' }}
+              >
+                <option value="">End Year</option>
+                {generateEndYearOptions().map(year => (
+                  <option key={year} value={year}>{year}</option>
+                ))}
+              </select>
               <input
                 type="text"
                 placeholder="Role"
@@ -1022,7 +1127,8 @@ const FacultyEditPage: React.FC = () => {
                 Remove
               </button>
             </div>
-          ))}
+            );
+          })}
         </div>
 
         {/* Doctoral Students Guided */}
@@ -1030,13 +1136,15 @@ const FacultyEditPage: React.FC = () => {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
             <h3>Doctoral Students Guided</h3>
             <button
-              onClick={() => addArrayItem('doctoralStudentsGuided', { name: '', status: '', title: '', organization: '' })}
+              onClick={() => addArrayItem('doctoralStudentsGuided', { name: '', status: '', title: '', organization: '', year: '' })}
               style={{ padding: '8px 16px', background: '#10b981', color: '#fff', border: 'none', borderRadius: 4 }}
             >
               Add Student
             </button>
           </div>
-          {facultyData.doctoralStudentsGuided.map((student, index) => (
+          {facultyData.doctoralStudentsGuided.map((student, index) => {
+            const { startYear, endYear } = parseYearField(student.year);
+            return (
             <div key={index} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16, marginBottom: 16, padding: 16, border: '1px solid #d1d5db', borderRadius: 4 }}>
               <input
                 type="text"
@@ -1066,6 +1174,26 @@ const FacultyEditPage: React.FC = () => {
                 onChange={e => updateArrayItem('doctoralStudentsGuided', index, 'organization', e.target.value)}
                 style={{ padding: 8, border: '1px solid #888', borderRadius: 4 }}
               />
+              <select
+                value={startYear}
+                onChange={e => updateYearField('doctoralStudentsGuided', index, e.target.value, endYear)}
+                style={{ padding: 8, border: '1px solid #888', borderRadius: 4, background: '#fff' }}
+              >
+                <option value="">Start Year</option>
+                {generateYearOptions().map(year => (
+                  <option key={year} value={year}>{year}</option>
+                ))}
+              </select>
+              <select
+                value={endYear}
+                onChange={e => updateYearField('doctoralStudentsGuided', index, startYear, e.target.value)}
+                style={{ padding: 8, border: '1px solid #888', borderRadius: 4, background: '#fff' }}
+              >
+                <option value="">End Year</option>
+                {generateEndYearOptions().map(year => (
+                  <option key={year} value={year}>{year}</option>
+                ))}
+              </select>
               <button
                 onClick={() => removeArrayItem('doctoralStudentsGuided', index)}
                 style={{ padding: '8px 16px', background: '#ef4444', color: '#fff', border: 'none', borderRadius: 4 }}
@@ -1073,7 +1201,8 @@ const FacultyEditPage: React.FC = () => {
                 Remove
               </button>
             </div>
-          ))}
+            );
+          })}
         </div>
 
         {/* Books / Chapters Published */}
