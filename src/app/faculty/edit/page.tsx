@@ -640,6 +640,8 @@ const FacultyEditPage: React.FC = () => {
                 <option value="Assistant HOD">Assistant HOD</option>
                 <option value="Associate Professor">Associate Professor</option>
                 <option value="Assistant Professor">Assistant Professor</option>
+
+                <option value="Principal">Principal</option>
               </select>
             </div>
             <div>
