@@ -168,6 +168,27 @@ const DepartmentDashboardLayout = ({ children, params }: LayoutProps) => {
               </ul>
             </li>
             <li>
+              <span className="block px-3 py-2 text-gray-500 font-medium">Achievements</span>
+              <ul className="ml-4 mt-2 space-y-2">
+                <li>
+                  <Link
+                    href={`/department-dashboard/${departmentId}/achievements/mou`}
+                    className="block rounded-md px-3 py-2 text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                  >
+                    MOUs
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    href={`/department-dashboard/${departmentId}/achievements/student_achievements`}
+                    className="block rounded-md px-3 py-2 text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                  >
+                    Student Achievements
+                  </Link>
+                </li>
+              </ul>
+            </li>
+            <li>
               <span className="block px-3 py-2 text-gray-500 font-medium">Placement</span>
               <ul className="ml-4 mt-2 space-y-2">
                 <li>
