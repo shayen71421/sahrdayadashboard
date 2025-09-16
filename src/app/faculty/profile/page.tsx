@@ -5,44 +5,51 @@ import { getFirestore, doc, getDoc } from "firebase/firestore";
 import { app } from "@/utils/firebase";
 import Link from "next/link";
 
-interface Contact {
-  email: string;
-  office: string;
-  phone: string;
-}
-
 interface Education {
   degree: string;
   field: string;
   institution: string;
+  academicYear: string;
+  date: string;
 }
 
 interface EmploymentHistory {
   organization: string;
   position: string;
   timeperiod: string;
+  academicYear: string;
+  date: string;
+}
+
+interface Membership {
+  name: string;
+  academicYear: string;
+  date: string;
 }
 
 interface Award {
   organization: string;
   title: string;
-  year: string;
+  academicYear: string;
+  date: string;
 }
 
 interface Publication {
   type: string;
-  year: string;
   title: string;
   subtitle: string;
   authors: string;
+  academicYear: string;
+  date: string;
 }
 
 interface ResearchProject {
   title: string;
   status: string;
   fundingagency: string;
-  duration: string;
   role: string;
+  academicYear: string;
+  date: string;
 }
 
 interface DoctoralStudent {
@@ -50,29 +57,46 @@ interface DoctoralStudent {
   status: string;
   title: string;
   organization: string;
+  academicYear: string;
+  date: string;
 }
 
 interface BookChapter {
   title: string;
   author: string;
-  year: string;
+  academicYear: string;
+  date: string;
   isbnId: string;
 }
 
 interface Patent {
   title: string;
   patentNo: string;
-  year: string;
   inventors: string;
   status: string;
+  academicYear: string;
+  date: string;
 }
 
 interface Conference {
   title: string;
   organization: string;
-  year: string;
   place: string;
   author: string;
+  academicYear: string;
+  date: string;
+}
+
+interface ResponsibilityItem {
+  name: string;
+  academicYear: string;
+  date: string;
+}
+
+interface TrainingItem {
+  name: string;
+  academicYear: string;
+  date: string;
 }
 
 interface FacultyData {
@@ -83,31 +107,31 @@ interface FacultyData {
   department: string;
   position: string;
   mailId: string;
+  phone: string;
   yearsOfExperience: string;
   areaOfInterest: string;
   address: string;
   aicteId: string;
   biography: string;
-  contact: Contact;
   education: Education[];
   employmenthistory: EmploymentHistory[];
-  memberships: string[];
+  memberships: Membership[];
   awards: Award[];
   publications: Publication[];
   researchprojects: ResearchProject[];
   doctoralStudentsGuided: DoctoralStudent[];
   booksChaptersPublished: BookChapter[];
-  currentResponsibilities: string[];
-  otherResponsibilities: string[];
-  trainingProgramsAttended: string[];
-  invitedSpeaker: string[];
-  resourcePerson: string[];
+  currentResponsibilities: ResponsibilityItem[];
+  otherResponsibilities: ResponsibilityItem[];
+  trainingProgramsAttended: TrainingItem[];
+  invitedSpeaker: TrainingItem[];
+  resourcePerson: TrainingItem[];
   patents: Patent[];
   conferences: Conference[];
-  expertCommittees: string[];
-  programsOrganized: string[];
-  positionsHeld: string[];
-  specializedTrainings: string[];
+  expertCommittees: TrainingItem[];
+  programsOrganized: TrainingItem[];
+  positionsHeld: TrainingItem[];
+  specializedTrainings: TrainingItem[];
   profilePicture?: string;
 }
 
@@ -136,7 +160,50 @@ const FacultyProfilePage: React.FC = () => {
       const docRef = doc(db, "faculty", email);
       const docSnap = await getDoc(docRef);
       if (docSnap.exists()) {
-        setFacultyData(docSnap.data() as FacultyData);
+        const rawData = docSnap.data() as any;
+        
+        // Handle migration from old data format
+        const migratedData: FacultyData = {
+          ...rawData,
+          // Handle phone migration from contact object
+          phone: rawData.phone || rawData.contact?.phone || "",
+          // Handle array migrations from string arrays to object arrays
+          memberships: rawData.memberships?.map((item: any) => 
+            typeof item === 'string' ? { name: item, academicYear: "", date: "" } : item
+          ) || [],
+          currentResponsibilities: rawData.currentResponsibilities?.map((item: any) => 
+            typeof item === 'string' ? { name: item, academicYear: "", date: "" } : item
+          ) || [],
+          otherResponsibilities: rawData.otherResponsibilities?.map((item: any) => 
+            typeof item === 'string' ? { name: item, academicYear: "", date: "" } : item
+          ) || [],
+          trainingProgramsAttended: rawData.trainingProgramsAttended?.map((item: any) => 
+            typeof item === 'string' ? { name: item, academicYear: "", date: "" } : item
+          ) || [],
+          invitedSpeaker: rawData.invitedSpeaker?.map((item: any) => 
+            typeof item === 'string' ? { name: item, academicYear: "", date: "" } : item
+          ) || [],
+          resourcePerson: rawData.resourcePerson?.map((item: any) => 
+            typeof item === 'string' ? { name: item, academicYear: "", date: "" } : item
+          ) || [],
+          expertCommittees: rawData.expertCommittees?.map((item: any) => 
+            typeof item === 'string' ? { name: item, academicYear: "", date: "" } : item
+          ) || [],
+          programsOrganized: rawData.programsOrganized?.map((item: any) => 
+            typeof item === 'string' ? { name: item, academicYear: "", date: "" } : item
+          ) || [],
+          positionsHeld: rawData.positionsHeld?.map((item: any) => 
+            typeof item === 'string' ? { name: item, academicYear: "", date: "" } : item
+          ) || [],
+          specializedTrainings: rawData.specializedTrainings?.map((item: any) => 
+            typeof item === 'string' ? { name: item, academicYear: "", date: "" } : item
+          ) || []
+        };
+        
+        // Remove the old contact field if it exists
+        delete (migratedData as any).contact;
+        
+        setFacultyData(migratedData);
       }
     } catch (error) {
       console.error("Error loading faculty data:", error);
@@ -253,7 +320,7 @@ const FacultyProfilePage: React.FC = () => {
           )}
 
           {/* Basic Information */}
-          {(facultyData.name || facultyData.websiteLink || facultyData.joinedDate || facultyData.officeLocation || facultyData.department || facultyData.position || facultyData.mailId || facultyData.yearsOfExperience || facultyData.areaOfInterest || facultyData.address || facultyData.aicteId) && (
+          {(facultyData.name || facultyData.websiteLink || facultyData.joinedDate || facultyData.officeLocation || facultyData.department || facultyData.position || facultyData.mailId || facultyData.phone || facultyData.yearsOfExperience || facultyData.areaOfInterest || facultyData.address || facultyData.aicteId) && (
             <div style={{ border: '1px solid #e5e7eb', borderRadius: 8, padding: 16 }}>
               <h3>Basic Information</h3>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: 16 }}>
@@ -292,6 +359,11 @@ const FacultyProfilePage: React.FC = () => {
                     <strong>Mail ID:</strong> {facultyData.mailId}
                   </div>
                 )}
+                {facultyData.phone && (
+                  <div>
+                    <strong>Phone:</strong> {facultyData.phone}
+                  </div>
+                )}
                 {facultyData.yearsOfExperience && (
                   <div>
                     <strong>Years of Experience:</strong> {facultyData.yearsOfExperience}
@@ -324,38 +396,18 @@ const FacultyProfilePage: React.FC = () => {
             </div>
           )}
 
-          {/* Contact Information */}
-          <div style={{ border: '1px solid #e5e7eb', borderRadius: 8, padding: 16 }}>
-            <h3>Contact Information</h3>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: 16 }}>
-              {facultyData.contact.email && (
-                <div>
-                  <strong>Email:</strong> {facultyData.contact.email}
-                </div>
-              )}
-              {facultyData.contact.office && (
-                <div>
-                  <strong>Office:</strong> {facultyData.contact.office}
-                </div>
-              )}
-              {facultyData.contact.phone && (
-                <div>
-                  <strong>Phone:</strong> {facultyData.contact.phone}
-                </div>
-              )}
-            </div>
-          </div>
-
           {/* Education */}
           {facultyData.education?.length > 0 && facultyData.education.some(edu => edu.degree || edu.field || edu.institution) && (
             <div style={{ border: '1px solid #e5e7eb', borderRadius: 8, padding: 16 }}>
               <h3>Education</h3>
               {facultyData.education.map((edu, index) => (
-                (edu.degree || edu.field || edu.institution) && (
+                (edu.degree || edu.field || edu.institution || edu.academicYear || edu.date) && (
                   <div key={index} style={{ marginBottom: 16, padding: 16, border: '1px solid #d1d5db', borderRadius: 4 }}>
                     {edu.degree && <div><strong>Degree:</strong> {edu.degree}</div>}
                     {edu.field && <div><strong>Field:</strong> {edu.field}</div>}
                     {edu.institution && <div><strong>Institution:</strong> {edu.institution}</div>}
+                    {edu.academicYear && <div><strong>Academic Year:</strong> {edu.academicYear}</div>}
+                    {edu.date && <div><strong>Date:</strong> {new Date(edu.date).toLocaleDateString()}</div>}
                   </div>
                 )
               ))}
@@ -367,11 +419,13 @@ const FacultyProfilePage: React.FC = () => {
             <div style={{ border: '1px solid #e5e7eb', borderRadius: 8, padding: 16 }}>
               <h3>Employment History</h3>
               {facultyData.employmenthistory.map((emp, index) => (
-                (emp.organization || emp.position || emp.timeperiod) && (
+                (emp.organization || emp.position || emp.timeperiod || emp.academicYear || emp.date) && (
                   <div key={index} style={{ marginBottom: 16, padding: 16, border: '1px solid #d1d5db', borderRadius: 4 }}>
                     {emp.position && <div><strong>Position:</strong> {emp.position}</div>}
                     {emp.organization && <div><strong>Organization:</strong> {emp.organization}</div>}
                     {emp.timeperiod && <div><strong>Period:</strong> {emp.timeperiod}</div>}
+                    {emp.academicYear && <div><strong>Academic Year:</strong> {emp.academicYear}</div>}
+                    {emp.date && <div><strong>Date:</strong> {new Date(emp.date).toLocaleDateString()}</div>}
                   </div>
                 )
               ))}
@@ -379,16 +433,18 @@ const FacultyProfilePage: React.FC = () => {
           )}
 
           {/* Memberships */}
-          {facultyData.memberships?.length > 0 && facultyData.memberships.some(membership => membership.trim()) && (
+          {facultyData.memberships?.length > 0 && facultyData.memberships.some(membership => membership.name) && (
             <div style={{ border: '1px solid #e5e7eb', borderRadius: 8, padding: 16 }}>
               <h3>Memberships</h3>
-              <ul>
-                {facultyData.memberships.map((membership, index) => (
-                  membership.trim() && (
-                    <li key={index} style={{ marginBottom: 8 }}>{membership}</li>
-                  )
-                ))}
-              </ul>
+              {facultyData.memberships.map((membership, index) => (
+                (membership.name || membership.academicYear || membership.date) && (
+                  <div key={index} style={{ marginBottom: 16, padding: 16, border: '1px solid #d1d5db', borderRadius: 4 }}>
+                    {membership.name && <div><strong>Name:</strong> {membership.name}</div>}
+                    {membership.academicYear && <div><strong>Academic Year:</strong> {membership.academicYear}</div>}
+                    {membership.date && <div><strong>Date:</strong> {new Date(membership.date).toLocaleDateString()}</div>}
+                  </div>
+                )
+              ))}
             </div>
           )}
 
@@ -397,11 +453,12 @@ const FacultyProfilePage: React.FC = () => {
             <div style={{ border: '1px solid #e5e7eb', borderRadius: 8, padding: 16 }}>
               <h3>Awards</h3>
               {facultyData.awards.map((award, index) => (
-                (award.title || award.organization || award.year) && (
+                (award.title || award.organization || award.academicYear || award.date) && (
                   <div key={index} style={{ marginBottom: 16, padding: 16, border: '1px solid #d1d5db', borderRadius: 4 }}>
                     {award.title && <div><strong>Title:</strong> {award.title}</div>}
                     {award.organization && <div><strong>Organization:</strong> {award.organization}</div>}
-                    {award.year && <div><strong>Year:</strong> {award.year}</div>}
+                    {award.academicYear && <div><strong>Academic Year:</strong> {award.academicYear}</div>}
+                    {award.date && <div><strong>Date:</strong> {new Date(award.date).toLocaleDateString()}</div>}
                   </div>
                 )
               ))}
@@ -413,13 +470,14 @@ const FacultyProfilePage: React.FC = () => {
             <div style={{ border: '1px solid #e5e7eb', borderRadius: 8, padding: 16 }}>
               <h3>Publications</h3>
               {facultyData.publications.map((pub, index) => (
-                (pub.title || pub.type || pub.subtitle || pub.authors || pub.year) && (
+                (pub.title || pub.type || pub.subtitle || pub.authors || pub.academicYear || pub.date) && (
                   <div key={index} style={{ marginBottom: 16, padding: 16, border: '1px solid #d1d5db', borderRadius: 4 }}>
                     {pub.title && <div><strong>Title:</strong> {pub.title}</div>}
                     {pub.subtitle && <div><strong>Publication:</strong> {pub.subtitle}</div>}
                     {pub.authors && <div><strong>Authors:</strong> {pub.authors}</div>}
                     {pub.type && <div><strong>Type:</strong> {pub.type}</div>}
-                    {pub.year && <div><strong>Year:</strong> {pub.year}</div>}
+                    {pub.academicYear && <div><strong>Academic Year:</strong> {pub.academicYear}</div>}
+                    {pub.date && <div><strong>Date:</strong> {new Date(pub.date).toLocaleDateString()}</div>}
                   </div>
                 )
               ))}
@@ -431,13 +489,14 @@ const FacultyProfilePage: React.FC = () => {
             <div style={{ border: '1px solid #e5e7eb', borderRadius: 8, padding: 16 }}>
               <h3>Research Projects</h3>
               {facultyData.researchprojects.map((project, index) => (
-                (project.title || project.status || project.fundingagency || project.duration || project.role) && (
+                (project.title || project.status || project.fundingagency || project.role || project.academicYear || project.date) && (
                   <div key={index} style={{ marginBottom: 16, padding: 16, border: '1px solid #d1d5db', borderRadius: 4 }}>
                     {project.title && <div><strong>Title:</strong> {project.title}</div>}
                     {project.status && <div><strong>Status:</strong> {project.status}</div>}
                     {project.fundingagency && <div><strong>Funding Agency:</strong> {project.fundingagency}</div>}
-                    {project.duration && <div><strong>Duration:</strong> {project.duration}</div>}
                     {project.role && <div><strong>Role:</strong> {project.role}</div>}
+                    {project.academicYear && <div><strong>Academic Year:</strong> {project.academicYear}</div>}
+                    {project.date && <div><strong>Date:</strong> {new Date(project.date).toLocaleDateString()}</div>}
                   </div>
                 )
               ))}
@@ -449,12 +508,14 @@ const FacultyProfilePage: React.FC = () => {
             <div style={{ border: '1px solid #e5e7eb', borderRadius: 8, padding: 16 }}>
               <h3>Doctoral Students Guided</h3>
               {facultyData.doctoralStudentsGuided.map((student, index) => (
-                (student.name || student.status || student.title || student.organization) && (
+                (student.name || student.status || student.title || student.organization || student.academicYear || student.date) && (
                   <div key={index} style={{ marginBottom: 16, padding: 16, border: '1px solid #d1d5db', borderRadius: 4 }}>
                     {student.name && <div><strong>Name:</strong> {student.name}</div>}
                     {student.status && <div><strong>Status:</strong> {student.status}</div>}
                     {student.title && <div><strong>Title:</strong> {student.title}</div>}
                     {student.organization && <div><strong>Organization:</strong> {student.organization}</div>}
+                    {student.academicYear && <div><strong>Academic Year:</strong> {student.academicYear}</div>}
+                    {student.date && <div><strong>Date:</strong> {new Date(student.date).toLocaleDateString()}</div>}
                   </div>
                 )
               ))}
@@ -466,11 +527,12 @@ const FacultyProfilePage: React.FC = () => {
             <div style={{ border: '1px solid #e5e7eb', borderRadius: 8, padding: 16 }}>
               <h3>Books/Chapters Published</h3>
               {facultyData.booksChaptersPublished.map((book, index) => (
-                (book.title || book.author || book.year || book.isbnId) && (
+                (book.title || book.author || book.academicYear || book.date || book.isbnId) && (
                   <div key={index} style={{ marginBottom: 16, padding: 16, border: '1px solid #d1d5db', borderRadius: 4 }}>
                     {book.title && <div><strong>Title:</strong> {book.title}</div>}
                     {book.author && <div><strong>Author:</strong> {book.author}</div>}
-                    {book.year && <div><strong>Year:</strong> {book.year}</div>}
+                    {book.academicYear && <div><strong>Academic Year:</strong> {book.academicYear}</div>}
+                    {book.date && <div><strong>Date:</strong> {new Date(book.date).toLocaleDateString()}</div>}
                     {book.isbnId && <div><strong>ISBN ID:</strong> {book.isbnId}</div>}
                   </div>
                 )
@@ -483,11 +545,12 @@ const FacultyProfilePage: React.FC = () => {
             <div style={{ border: '1px solid #e5e7eb', borderRadius: 8, padding: 16 }}>
               <h3>Patents</h3>
               {facultyData.patents.map((patent, index) => (
-                (patent.title || patent.patentNo || patent.year || patent.inventors || patent.status) && (
+                (patent.title || patent.patentNo || patent.academicYear || patent.date || patent.inventors || patent.status) && (
                   <div key={index} style={{ marginBottom: 16, padding: 16, border: '1px solid #d1d5db', borderRadius: 4 }}>
                     {patent.title && <div><strong>Title:</strong> {patent.title}</div>}
                     {patent.patentNo && <div><strong>Patent No:</strong> {patent.patentNo}</div>}
-                    {patent.year && <div><strong>Year:</strong> {patent.year}</div>}
+                    {patent.academicYear && <div><strong>Academic Year:</strong> {patent.academicYear}</div>}
+                    {patent.date && <div><strong>Date:</strong> {new Date(patent.date).toLocaleDateString()}</div>}
                     {patent.inventors && <div><strong>Inventors:</strong> {patent.inventors}</div>}
                     {patent.status && <div><strong>Status:</strong> {patent.status}</div>}
                   </div>
@@ -501,11 +564,12 @@ const FacultyProfilePage: React.FC = () => {
             <div style={{ border: '1px solid #e5e7eb', borderRadius: 8, padding: 16 }}>
               <h3>Conferences</h3>
               {facultyData.conferences.map((conf, index) => (
-                (conf.title || conf.organization || conf.year || conf.place || conf.author) && (
+                (conf.title || conf.organization || conf.academicYear || conf.date || conf.place || conf.author) && (
                   <div key={index} style={{ marginBottom: 16, padding: 16, border: '1px solid #d1d5db', borderRadius: 4 }}>
                     {conf.title && <div><strong>Title:</strong> {conf.title}</div>}
                     {conf.organization && <div><strong>Organization:</strong> {conf.organization}</div>}
-                    {conf.year && <div><strong>Year:</strong> {conf.year}</div>}
+                    {conf.academicYear && <div><strong>Academic Year:</strong> {conf.academicYear}</div>}
+                    {conf.date && <div><strong>Date:</strong> {new Date(conf.date).toLocaleDateString()}</div>}
                     {conf.place && <div><strong>Place:</strong> {conf.place}</div>}
                     {conf.author && <div><strong>Author:</strong> {conf.author}</div>}
                   </div>
@@ -515,110 +579,146 @@ const FacultyProfilePage: React.FC = () => {
           )}
 
           {/* Current Responsibilities */}
-          {facultyData.currentResponsibilities?.length > 0 && facultyData.currentResponsibilities.some(resp => resp.trim()) && (
+          {facultyData.currentResponsibilities?.length > 0 && facultyData.currentResponsibilities.some(resp => resp.name) && (
             <div style={{ border: '1px solid #e5e7eb', borderRadius: 8, padding: 16 }}>
               <h3>Current Responsibilities</h3>
-              <ul style={{ margin: 0, paddingLeft: 20 }}>
-                {facultyData.currentResponsibilities.map((resp, index) => (
-                  resp.trim() && <li key={index}>{resp}</li>
-                ))}
-              </ul>
+              {facultyData.currentResponsibilities.map((resp, index) => (
+                (resp.name || resp.academicYear || resp.date) && (
+                  <div key={index} style={{ marginBottom: 16, padding: 16, border: '1px solid #d1d5db', borderRadius: 4 }}>
+                    {resp.name && <div><strong>Name:</strong> {resp.name}</div>}
+                    {resp.academicYear && <div><strong>Academic Year:</strong> {resp.academicYear}</div>}
+                    {resp.date && <div><strong>Date:</strong> {new Date(resp.date).toLocaleDateString()}</div>}
+                  </div>
+                )
+              ))}
             </div>
           )}
 
           {/* Other Responsibilities */}
-          {facultyData.otherResponsibilities?.length > 0 && facultyData.otherResponsibilities.some(resp => resp.trim()) && (
+          {facultyData.otherResponsibilities?.length > 0 && facultyData.otherResponsibilities.some(resp => resp.name) && (
             <div style={{ border: '1px solid #e5e7eb', borderRadius: 8, padding: 16 }}>
               <h3>Other Responsibilities</h3>
-              <ul style={{ margin: 0, paddingLeft: 20 }}>
-                {facultyData.otherResponsibilities.map((resp, index) => (
-                  resp.trim() && <li key={index}>{resp}</li>
-                ))}
-              </ul>
+              {facultyData.otherResponsibilities.map((resp, index) => (
+                (resp.name || resp.academicYear || resp.date) && (
+                  <div key={index} style={{ marginBottom: 16, padding: 16, border: '1px solid #d1d5db', borderRadius: 4 }}>
+                    {resp.name && <div><strong>Name:</strong> {resp.name}</div>}
+                    {resp.academicYear && <div><strong>Academic Year:</strong> {resp.academicYear}</div>}
+                    {resp.date && <div><strong>Date:</strong> {new Date(resp.date).toLocaleDateString()}</div>}
+                  </div>
+                )
+              ))}
             </div>
           )}
 
           {/* Training Programs Attended */}
-          {facultyData.trainingProgramsAttended?.length > 0 && facultyData.trainingProgramsAttended.some(training => training.trim()) && (
+          {facultyData.trainingProgramsAttended?.length > 0 && facultyData.trainingProgramsAttended.some(training => training.name) && (
             <div style={{ border: '1px solid #e5e7eb', borderRadius: 8, padding: 16 }}>
               <h3>Training Programs Attended</h3>
-              <ul style={{ margin: 0, paddingLeft: 20 }}>
-                {facultyData.trainingProgramsAttended.map((training, index) => (
-                  training.trim() && <li key={index}>{training}</li>
-                ))}
-              </ul>
+              {facultyData.trainingProgramsAttended.map((training, index) => (
+                (training.name || training.academicYear || training.date) && (
+                  <div key={index} style={{ marginBottom: 16, padding: 16, border: '1px solid #d1d5db', borderRadius: 4 }}>
+                    {training.name && <div><strong>Name:</strong> {training.name}</div>}
+                    {training.academicYear && <div><strong>Academic Year:</strong> {training.academicYear}</div>}
+                    {training.date && <div><strong>Date:</strong> {new Date(training.date).toLocaleDateString()}</div>}
+                  </div>
+                )
+              ))}
             </div>
           )}
 
           {/* Invited Speaker */}
-          {facultyData.invitedSpeaker?.length > 0 && facultyData.invitedSpeaker.some(speaker => speaker.trim()) && (
+          {facultyData.invitedSpeaker?.length > 0 && facultyData.invitedSpeaker.some(speaker => speaker.name) && (
             <div style={{ border: '1px solid #e5e7eb', borderRadius: 8, padding: 16 }}>
               <h3>Invited Speaker</h3>
-              <ul style={{ margin: 0, paddingLeft: 20 }}>
-                {facultyData.invitedSpeaker.map((speaker, index) => (
-                  speaker.trim() && <li key={index}>{speaker}</li>
-                ))}
-              </ul>
+              {facultyData.invitedSpeaker.map((speaker, index) => (
+                (speaker.name || speaker.academicYear || speaker.date) && (
+                  <div key={index} style={{ marginBottom: 16, padding: 16, border: '1px solid #d1d5db', borderRadius: 4 }}>
+                    {speaker.name && <div><strong>Name:</strong> {speaker.name}</div>}
+                    {speaker.academicYear && <div><strong>Academic Year:</strong> {speaker.academicYear}</div>}
+                    {speaker.date && <div><strong>Date:</strong> {new Date(speaker.date).toLocaleDateString()}</div>}
+                  </div>
+                )
+              ))}
             </div>
           )}
 
           {/* Resource Person */}
-          {facultyData.resourcePerson?.length > 0 && facultyData.resourcePerson.some(person => person.trim()) && (
+          {facultyData.resourcePerson?.length > 0 && facultyData.resourcePerson.some(person => person.name) && (
             <div style={{ border: '1px solid #e5e7eb', borderRadius: 8, padding: 16 }}>
               <h3>Resource Person</h3>
-              <ul style={{ margin: 0, paddingLeft: 20 }}>
-                {facultyData.resourcePerson.map((person, index) => (
-                  person.trim() && <li key={index}>{person}</li>
-                ))}
-              </ul>
+              {facultyData.resourcePerson.map((person, index) => (
+                (person.name || person.academicYear || person.date) && (
+                  <div key={index} style={{ marginBottom: 16, padding: 16, border: '1px solid #d1d5db', borderRadius: 4 }}>
+                    {person.name && <div><strong>Name:</strong> {person.name}</div>}
+                    {person.academicYear && <div><strong>Academic Year:</strong> {person.academicYear}</div>}
+                    {person.date && <div><strong>Date:</strong> {new Date(person.date).toLocaleDateString()}</div>}
+                  </div>
+                )
+              ))}
             </div>
           )}
 
           {/* Expert Committees */}
-          {facultyData.expertCommittees?.length > 0 && facultyData.expertCommittees.some(committee => committee.trim()) && (
+          {facultyData.expertCommittees?.length > 0 && facultyData.expertCommittees.some(committee => committee.name) && (
             <div style={{ border: '1px solid #e5e7eb', borderRadius: 8, padding: 16 }}>
               <h3>Expert Committees</h3>
-              <ul style={{ margin: 0, paddingLeft: 20 }}>
-                {facultyData.expertCommittees.map((committee, index) => (
-                  committee.trim() && <li key={index}>{committee}</li>
-                ))}
-              </ul>
+              {facultyData.expertCommittees.map((committee, index) => (
+                (committee.name || committee.academicYear || committee.date) && (
+                  <div key={index} style={{ marginBottom: 16, padding: 16, border: '1px solid #d1d5db', borderRadius: 4 }}>
+                    {committee.name && <div><strong>Name:</strong> {committee.name}</div>}
+                    {committee.academicYear && <div><strong>Academic Year:</strong> {committee.academicYear}</div>}
+                    {committee.date && <div><strong>Date:</strong> {new Date(committee.date).toLocaleDateString()}</div>}
+                  </div>
+                )
+              ))}
             </div>
           )}
 
           {/* Programs Organized */}
-          {facultyData.programsOrganized?.length > 0 && facultyData.programsOrganized.some(program => program.trim()) && (
+          {facultyData.programsOrganized?.length > 0 && facultyData.programsOrganized.some(program => program.name) && (
             <div style={{ border: '1px solid #e5e7eb', borderRadius: 8, padding: 16 }}>
               <h3>Programs Organized</h3>
-              <ul style={{ margin: 0, paddingLeft: 20 }}>
-                {facultyData.programsOrganized.map((program, index) => (
-                  program.trim() && <li key={index}>{program}</li>
-                ))}
-              </ul>
+              {facultyData.programsOrganized.map((program, index) => (
+                (program.name || program.academicYear || program.date) && (
+                  <div key={index} style={{ marginBottom: 16, padding: 16, border: '1px solid #d1d5db', borderRadius: 4 }}>
+                    {program.name && <div><strong>Name:</strong> {program.name}</div>}
+                    {program.academicYear && <div><strong>Academic Year:</strong> {program.academicYear}</div>}
+                    {program.date && <div><strong>Date:</strong> {new Date(program.date).toLocaleDateString()}</div>}
+                  </div>
+                )
+              ))}
             </div>
           )}
 
           {/* Positions Held */}
-          {facultyData.positionsHeld?.length > 0 && facultyData.positionsHeld.some(position => position.trim()) && (
+          {facultyData.positionsHeld?.length > 0 && facultyData.positionsHeld.some(position => position.name) && (
             <div style={{ border: '1px solid #e5e7eb', borderRadius: 8, padding: 16 }}>
               <h3>Positions Held</h3>
-              <ul style={{ margin: 0, paddingLeft: 20 }}>
-                {facultyData.positionsHeld.map((position, index) => (
-                  position.trim() && <li key={index}>{position}</li>
-                ))}
-              </ul>
+              {facultyData.positionsHeld.map((position, index) => (
+                (position.name || position.academicYear || position.date) && (
+                  <div key={index} style={{ marginBottom: 16, padding: 16, border: '1px solid #d1d5db', borderRadius: 4 }}>
+                    {position.name && <div><strong>Name:</strong> {position.name}</div>}
+                    {position.academicYear && <div><strong>Academic Year:</strong> {position.academicYear}</div>}
+                    {position.date && <div><strong>Date:</strong> {new Date(position.date).toLocaleDateString()}</div>}
+                  </div>
+                )
+              ))}
             </div>
           )}
 
           {/* Specialized Trainings */}
-          {facultyData.specializedTrainings?.length > 0 && facultyData.specializedTrainings.some(training => training.trim()) && (
+          {facultyData.specializedTrainings?.length > 0 && facultyData.specializedTrainings.some(training => training.name) && (
             <div style={{ border: '1px solid #e5e7eb', borderRadius: 8, padding: 16 }}>
               <h3>Specialized Trainings</h3>
-              <ul style={{ margin: 0, paddingLeft: 20 }}>
-                {facultyData.specializedTrainings.map((training, index) => (
-                  training.trim() && <li key={index}>{training}</li>
-                ))}
-              </ul>
+              {facultyData.specializedTrainings.map((training, index) => (
+                (training.name || training.academicYear || training.date) && (
+                  <div key={index} style={{ marginBottom: 16, padding: 16, border: '1px solid #d1d5db', borderRadius: 4 }}>
+                    {training.name && <div><strong>Name:</strong> {training.name}</div>}
+                    {training.academicYear && <div><strong>Academic Year:</strong> {training.academicYear}</div>}
+                    {training.date && <div><strong>Date:</strong> {new Date(training.date).toLocaleDateString()}</div>}
+                  </div>
+                )
+              ))}
             </div>
           )}
         </div>
