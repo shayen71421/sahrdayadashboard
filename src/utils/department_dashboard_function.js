@@ -2011,3 +2011,44 @@ export async function deleteMou(departmentId, mouId) {
   const docRef = doc(db, "department", departmentId, "achievements", "main", "mou", mouId);
   await deleteDoc(docRef);
 }
+/**
+ * Fetch all student achievements for a department
+ */
+export async function fetchStudentAchievements(departmentId) {
+  const colRef = collection(db, "department", departmentId, "achievements", "main", "student_achievements");
+  const snap = await getDocs(colRef);
+  return snap.docs.map(docSnap => ({
+    id: docSnap.id,
+    achievementName: docSnap.data().achievementName || "",
+    description: docSnap.data().description || "",
+    date: docSnap.data().date || "",
+    academicYear: docSnap.data().academicYear || "",
+    pdfUrl: docSnap.data().pdfUrl || ""
+  }));
+}
+
+/**
+ * Add student achievement with optional PDF
+ */
+export async function addStudentAchievement(departmentId, { achievementName, description, date, academicYear, pdfFile }) {
+  let pdfUrl = "";
+  if (pdfFile) {
+    const safeName = achievementName.trim().replace(/[^a-z0-9]+/gi, "-").toLowerCase();
+    const filename = `${safeName}-${Date.now()}.pdf`;
+    const path = `${departmentId}/achievements/student_achievements/${filename}`;
+    const storageRef = ref(storage, path);
+    const uploadTask = uploadBytesResumable(storageRef, pdfFile);
+    await uploadTask;
+    pdfUrl = await getDownloadURL(uploadTask.snapshot.ref);
+  }
+  const colRef = collection(db, "department", departmentId, "achievements", "main", "student_achievements");
+  await addDoc(colRef, { achievementName, description, date, academicYear, pdfUrl });
+}
+
+/**
+ * Delete student achievement document
+ */
+export async function deleteStudentAchievement(departmentId, achievementId) {
+  const docRef = doc(db, "department", departmentId, "achievements", "main", "student_achievements", achievementId);
+  await deleteDoc(docRef);
+}
