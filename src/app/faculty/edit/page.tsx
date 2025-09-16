@@ -10,8 +10,6 @@ interface Education {
   degree: string;
   field: string;
   institution: string;
-  academicYear: string;
-  date: string;
 }
 
 interface EmploymentHistory {
@@ -165,7 +163,7 @@ const FacultyEditPage: React.FC = () => {
     address: "",
     aicteId: "",
     biography: "",
-    education: [{ degree: "", field: "", institution: "", academicYear: "", date: "" }],
+    education: [{ degree: "", field: "", institution: "" }],
     employmenthistory: [{ organization: "", position: "", timeperiod: "", academicYear: "", date: "" }],
     memberships: [{ name: "", academicYear: "", date: "" }],
     awards: [{ organization: "", title: "", academicYear: "", date: "" }],
@@ -225,7 +223,7 @@ const FacultyEditPage: React.FC = () => {
           address: "",
           aicteId: "",
           biography: "",
-          education: [{ degree: "", field: "", institution: "", academicYear: "", date: "" }],
+          education: [{ degree: "", field: "", institution: "" }],
           employmenthistory: [{ organization: "", position: "", timeperiod: "", academicYear: "", date: "" }],
           memberships: [{ name: "", academicYear: "", date: "" }],
           awards: [{ organization: "", title: "", academicYear: "", date: "" }],
@@ -257,9 +255,7 @@ const FacultyEditPage: React.FC = () => {
             loadedData.education.map(edu => ({
               degree: edu.degree || "",
               field: edu.field || "",
-              institution: edu.institution || "",
-              academicYear: edu.academicYear || "",
-              date: edu.date || ""
+              institution: edu.institution || ""
             })) : defaultData.education,
           employmenthistory: loadedData.employmenthistory && loadedData.employmenthistory.length > 0 ? 
             loadedData.employmenthistory.map(emp => ({
@@ -485,7 +481,7 @@ const FacultyEditPage: React.FC = () => {
         address: "",
         aicteId: "",
         biography: "",
-        education: [{ degree: "", field: "", institution: "", academicYear: "", date: "" }],
+        education: [{ degree: "", field: "", institution: "" }],
         employmenthistory: [{ organization: "", position: "", timeperiod: "", academicYear: "", date: "" }],
         memberships: [{ name: "", academicYear: "", date: "" }],
         awards: [{ organization: "", title: "", academicYear: "", date: "" }],
@@ -909,7 +905,7 @@ const FacultyEditPage: React.FC = () => {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
             <h3>Education</h3>
             <button
-              onClick={() => addArrayItem('education', { degree: '', field: '', institution: '', academicYear: '', date: '' })}
+              onClick={() => addArrayItem('education', { degree: '', field: '', institution: '' })}
               style={{ padding: '8px 16px', background: '#10b981', color: '#fff', border: 'none', borderRadius: 4 }}
             >
               Add Education
@@ -936,23 +932,6 @@ const FacultyEditPage: React.FC = () => {
                 placeholder="Institution"
                 value={edu.institution}
                 onChange={e => updateArrayItem('education', index, 'institution', e.target.value)}
-                style={{ padding: 8, border: '1px solid #888', borderRadius: 4 }}
-              />
-              <select
-                value={edu.academicYear}
-                onChange={e => updateArrayItem('education', index, 'academicYear', e.target.value)}
-                style={{ padding: 8, border: '1px solid #888', borderRadius: 4 }}
-              >
-                <option value="">Select Academic Year</option>
-                {generateAcademicYearOptions().map(year => (
-                  <option key={year} value={year}>{year}</option>
-                ))}
-              </select>
-              <input
-                type="date"
-                placeholder="Date"
-                value={edu.date}
-                onChange={e => updateArrayItem('education', index, 'date', e.target.value)}
                 style={{ padding: 8, border: '1px solid #888', borderRadius: 4 }}
               />
               <button
