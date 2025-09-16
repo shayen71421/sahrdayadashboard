@@ -6,44 +6,45 @@ import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { app } from "@/utils/firebase";
 import Link from "next/link";
 
-interface Contact {
-  email: string;
-  office: string;
-  phone: string;
-}
-
 interface Education {
   degree: string;
   field: string;
   institution: string;
+  academicYear: string;
+  date: string;
 }
 
 interface EmploymentHistory {
   organization: string;
   position: string;
   timeperiod: string;
+  academicYear: string;
+  date: string;
 }
 
 interface Award {
   organization: string;
   title: string;
-  year: string;
+  academicYear: string;
+  date: string;
 }
 
 interface Publication {
   type: string;
-  year: string;
   title: string;
   subtitle: string;
   authors: string;
+  academicYear: string;
+  date: string;
 }
 
 interface ResearchProject {
   title: string;
   status: string;
   fundingagency: string;
-  duration: string;
   role: string;
+  academicYear: string;
+  date: string;
 }
 
 interface DoctoralStudent {
@@ -51,29 +52,40 @@ interface DoctoralStudent {
   status: string;
   title: string;
   organization: string;
+  academicYear: string;
+  date: string;
 }
 
 interface BookChapter {
   title: string;
   author: string;
-  year: string;
+  academicYear: string;
+  date: string;
   isbnId: string;
 }
 
 interface Patent {
   title: string;
   patentNo: string;
-  year: string;
   inventors: string;
   status: string;
+  academicYear: string;
+  date: string;
 }
 
 interface Conference {
   title: string;
   organization: string;
-  year: string;
   place: string;
   author: string;
+  academicYear: string;
+  date: string;
+}
+
+interface Membership {
+  name: string;
+  academicYear: string;
+  date: string;
 }
 
 interface FacultyData {
@@ -84,31 +96,31 @@ interface FacultyData {
   department: string;
   position: string;
   mailId: string;
+  phone: string;
   yearsOfExperience: string;
   areaOfInterest: string;
   address: string;
   aicteId: string;
   biography: string;
-  contact: Contact;
   education: Education[];
   employmenthistory: EmploymentHistory[];
-  memberships: string[];
+  memberships: Membership[];
   awards: Award[];
   publications: Publication[];
   researchprojects: ResearchProject[];
   doctoralStudentsGuided: DoctoralStudent[];
   booksChaptersPublished: BookChapter[];
-  currentResponsibilities: string[];
-  otherResponsibilities: string[];
-  trainingProgramsAttended: string[];
-  invitedSpeaker: string[];
-  resourcePerson: string[];
+  currentResponsibilities: Array<{name: string; academicYear: string; date: string}>;
+  otherResponsibilities: Array<{name: string; academicYear: string; date: string}>;
+  trainingProgramsAttended: Array<{name: string; academicYear: string; date: string}>;
+  invitedSpeaker: Array<{name: string; academicYear: string; date: string}>;
+  resourcePerson: Array<{name: string; academicYear: string; date: string}>;
   patents: Patent[];
   conferences: Conference[];
-  expertCommittees: string[];
-  programsOrganized: string[];
-  positionsHeld: string[];
-  specializedTrainings: string[];
+  expertCommittees: Array<{name: string; academicYear: string; date: string}>;
+  programsOrganized: Array<{name: string; academicYear: string; date: string}>;
+  positionsHeld: Array<{name: string; academicYear: string; date: string}>;
+  specializedTrainings: Array<{name: string; academicYear: string; date: string}>;
   profilePicture?: string;
 }
 
@@ -120,6 +132,17 @@ const generateYearOptions = () => {
     years.push(year.toString());
   }
   return years;
+};
+
+// Helper function to generate academic year options
+const generateAcademicYearOptions = () => {
+  const currentYear = new Date().getFullYear();
+  const academicYears = [];
+  for (let year = currentYear; year >= 1990; year--) {
+    const nextYear = year + 1;
+    academicYears.push(`${year}-${nextYear.toString().slice(-2)}`);
+  }
+  return academicYears;
 };
 
 const FacultyEditPage: React.FC = () => {
@@ -136,31 +159,31 @@ const FacultyEditPage: React.FC = () => {
     department: "",
     position: "",
     mailId: "",
+    phone: "",
     yearsOfExperience: "",
     areaOfInterest: "",
     address: "",
     aicteId: "",
     biography: "",
-    contact: { email: "", office: "", phone: "" },
-    education: [{ degree: "", field: "", institution: "" }],
-    employmenthistory: [{ organization: "", position: "", timeperiod: "" }],
-    memberships: [""],
-    awards: [{ organization: "", title: "", year: "" }],
-    publications: [{ type: "", year: "", title: "", subtitle: "", authors: "" }],
-    researchprojects: [{ title: "", status: "", fundingagency: "", duration: "", role: "" }],
-    doctoralStudentsGuided: [{ name: "", status: "", title: "", organization: "" }],
-    booksChaptersPublished: [{ title: "", author: "", year: "", isbnId: "" }],
-    currentResponsibilities: [""],
-    otherResponsibilities: [""],
-    trainingProgramsAttended: [""],
-    invitedSpeaker: [""],
-    resourcePerson: [""],
-    patents: [{ title: "", patentNo: "", year: "", inventors: "", status: "" }],
-    conferences: [{ title: "", organization: "", year: "", place: "", author: "" }],
-    expertCommittees: [""],
-    programsOrganized: [""],
-    positionsHeld: [""],
-    specializedTrainings: [""]
+    education: [{ degree: "", field: "", institution: "", academicYear: "", date: "" }],
+    employmenthistory: [{ organization: "", position: "", timeperiod: "", academicYear: "", date: "" }],
+    memberships: [{ name: "", academicYear: "", date: "" }],
+    awards: [{ organization: "", title: "", academicYear: "", date: "" }],
+    publications: [{ type: "", title: "", subtitle: "", authors: "", academicYear: "", date: "" }],
+    researchprojects: [{ title: "", status: "", fundingagency: "", role: "", academicYear: "", date: "" }],
+    doctoralStudentsGuided: [{ name: "", status: "", title: "", organization: "", academicYear: "", date: "" }],
+    booksChaptersPublished: [{ title: "", author: "", academicYear: "", date: "", isbnId: "" }],
+    currentResponsibilities: [{ name: "", academicYear: "", date: "" }],
+    otherResponsibilities: [{ name: "", academicYear: "", date: "" }],
+    trainingProgramsAttended: [{ name: "", academicYear: "", date: "" }],
+    invitedSpeaker: [{ name: "", academicYear: "", date: "" }],
+    resourcePerson: [{ name: "", academicYear: "", date: "" }],
+    patents: [{ title: "", patentNo: "", inventors: "", status: "", academicYear: "", date: "" }],
+    conferences: [{ title: "", organization: "", place: "", author: "", academicYear: "", date: "" }],
+    expertCommittees: [{ name: "", academicYear: "", date: "" }],
+    programsOrganized: [{ name: "", academicYear: "", date: "" }],
+    positionsHeld: [{ name: "", academicYear: "", date: "" }],
+    specializedTrainings: [{ name: "", academicYear: "", date: "" }]
   });
   const [saving, setSaving] = useState(false);
   const [profilePictureFile, setProfilePictureFile] = useState<File | null>(null);
@@ -196,31 +219,31 @@ const FacultyEditPage: React.FC = () => {
           department: "",
           position: "",
           mailId: "",
+          phone: "",
           yearsOfExperience: "",
           areaOfInterest: "",
           address: "",
           aicteId: "",
           biography: "",
-          contact: { email: "", office: "", phone: "" },
-          education: [{ degree: "", field: "", institution: "" }],
-          employmenthistory: [{ organization: "", position: "", timeperiod: "" }],
-          memberships: [""],
-          awards: [{ organization: "", title: "", year: "" }],
-          publications: [{ type: "", year: "", title: "", subtitle: "", authors: "" }],
-          researchprojects: [{ title: "", status: "", fundingagency: "", duration: "", role: "" }],
-          doctoralStudentsGuided: [{ name: "", status: "", title: "", organization: "" }],
-          booksChaptersPublished: [{ title: "", author: "", year: "", isbnId: "" }],
-          currentResponsibilities: [""],
-          otherResponsibilities: [""],
-          trainingProgramsAttended: [""],
-          invitedSpeaker: [""],
-          resourcePerson: [""],
-          patents: [{ title: "", patentNo: "", year: "", inventors: "", status: "" }],
-          conferences: [{ title: "", organization: "", year: "", place: "", author: "" }],
-          expertCommittees: [""],
-          programsOrganized: [""],
-          positionsHeld: [""],
-          specializedTrainings: [""],
+          education: [{ degree: "", field: "", institution: "", academicYear: "", date: "" }],
+          employmenthistory: [{ organization: "", position: "", timeperiod: "", academicYear: "", date: "" }],
+          memberships: [{ name: "", academicYear: "", date: "" }],
+          awards: [{ organization: "", title: "", academicYear: "", date: "" }],
+          publications: [{ type: "", title: "", subtitle: "", authors: "", academicYear: "", date: "" }],
+          researchprojects: [{ title: "", status: "", fundingagency: "", role: "", academicYear: "", date: "" }],
+          doctoralStudentsGuided: [{ name: "", status: "", title: "", organization: "", academicYear: "", date: "" }],
+          booksChaptersPublished: [{ title: "", author: "", academicYear: "", date: "", isbnId: "" }],
+          currentResponsibilities: [{ name: "", academicYear: "", date: "" }],
+          otherResponsibilities: [{ name: "", academicYear: "", date: "" }],
+          trainingProgramsAttended: [{ name: "", academicYear: "", date: "" }],
+          invitedSpeaker: [{ name: "", academicYear: "", date: "" }],
+          resourcePerson: [{ name: "", academicYear: "", date: "" }],
+          patents: [{ title: "", patentNo: "", inventors: "", status: "", academicYear: "", date: "" }],
+          conferences: [{ title: "", organization: "", place: "", author: "", academicYear: "", date: "" }],
+          expertCommittees: [{ name: "", academicYear: "", date: "" }],
+          programsOrganized: [{ name: "", academicYear: "", date: "" }],
+          positionsHeld: [{ name: "", academicYear: "", date: "" }],
+          specializedTrainings: [{ name: "", academicYear: "", date: "" }],
           profilePicture: ""
         };
         
@@ -228,28 +251,197 @@ const FacultyEditPage: React.FC = () => {
         const mergedData: FacultyData = {
           ...defaultData,
           ...loadedData,
-          contact: {
-            ...defaultData.contact,
-            ...(loadedData.contact || {})
-          },
-          education: loadedData.education && loadedData.education.length > 0 ? loadedData.education : defaultData.education,
-          employmenthistory: loadedData.employmenthistory && loadedData.employmenthistory.length > 0 ? loadedData.employmenthistory : defaultData.employmenthistory,
-          memberships: loadedData.memberships && loadedData.memberships.length > 0 ? loadedData.memberships : defaultData.memberships,
-          awards: loadedData.awards && loadedData.awards.length > 0 ? loadedData.awards : defaultData.awards,
-          publications: loadedData.publications && loadedData.publications.length > 0 ? loadedData.publications : defaultData.publications,
-          researchprojects: loadedData.researchprojects && loadedData.researchprojects.length > 0 ? loadedData.researchprojects : defaultData.researchprojects,
-          doctoralStudentsGuided: loadedData.doctoralStudentsGuided && loadedData.doctoralStudentsGuided.length > 0 ? loadedData.doctoralStudentsGuided : defaultData.doctoralStudentsGuided,
-          booksChaptersPublished: loadedData.booksChaptersPublished && loadedData.booksChaptersPublished.length > 0 ? loadedData.booksChaptersPublished : defaultData.booksChaptersPublished,
-          otherResponsibilities: loadedData.otherResponsibilities && loadedData.otherResponsibilities.length > 0 ? loadedData.otherResponsibilities : defaultData.otherResponsibilities,
-          trainingProgramsAttended: loadedData.trainingProgramsAttended && loadedData.trainingProgramsAttended.length > 0 ? loadedData.trainingProgramsAttended : defaultData.trainingProgramsAttended,
-          invitedSpeaker: loadedData.invitedSpeaker && loadedData.invitedSpeaker.length > 0 ? loadedData.invitedSpeaker : defaultData.invitedSpeaker,
-          resourcePerson: loadedData.resourcePerson && loadedData.resourcePerson.length > 0 ? loadedData.resourcePerson : defaultData.resourcePerson,
-          patents: loadedData.patents && loadedData.patents.length > 0 ? loadedData.patents : defaultData.patents,
-          conferences: loadedData.conferences && loadedData.conferences.length > 0 ? loadedData.conferences : defaultData.conferences,
-          expertCommittees: loadedData.expertCommittees && loadedData.expertCommittees.length > 0 ? loadedData.expertCommittees : defaultData.expertCommittees,
-          programsOrganized: loadedData.programsOrganized && loadedData.programsOrganized.length > 0 ? loadedData.programsOrganized : defaultData.programsOrganized,
-          positionsHeld: loadedData.positionsHeld && loadedData.positionsHeld.length > 0 ? loadedData.positionsHeld : defaultData.positionsHeld,
-          specializedTrainings: loadedData.specializedTrainings && loadedData.specializedTrainings.length > 0 ? loadedData.specializedTrainings : defaultData.specializedTrainings
+          // Handle migration from contact.phone to phone field for backward compatibility
+          phone: loadedData.phone || (loadedData as any).contact?.phone || "",
+          education: loadedData.education && loadedData.education.length > 0 ? 
+            loadedData.education.map(edu => ({
+              degree: edu.degree || "",
+              field: edu.field || "",
+              institution: edu.institution || "",
+              academicYear: edu.academicYear || "",
+              date: edu.date || ""
+            })) : defaultData.education,
+          employmenthistory: loadedData.employmenthistory && loadedData.employmenthistory.length > 0 ? 
+            loadedData.employmenthistory.map(emp => ({
+              organization: emp.organization || "",
+              position: emp.position || "",
+              timeperiod: emp.timeperiod || "",
+              academicYear: emp.academicYear || "",
+              date: emp.date || ""
+            })) : defaultData.employmenthistory,
+          memberships: loadedData.memberships && loadedData.memberships.length > 0 ? 
+            loadedData.memberships.map(mem => {
+              // Handle both old string format and new object format
+              if (typeof mem === 'string') {
+                return { name: mem, academicYear: "", date: "" };
+              }
+              return {
+                name: mem.name || "",
+                academicYear: mem.academicYear || "",
+                date: mem.date || ""
+              };
+            }) : defaultData.memberships,
+          awards: loadedData.awards && loadedData.awards.length > 0 ? 
+            loadedData.awards.map(award => ({
+              organization: award.organization || "",
+              title: award.title || "",
+              academicYear: award.academicYear || "",
+              date: award.date || ""
+            })) : defaultData.awards,
+          publications: loadedData.publications && loadedData.publications.length > 0 ? 
+            loadedData.publications.map(pub => ({
+              type: pub.type || "",
+              title: pub.title || "",
+              subtitle: pub.subtitle || "",
+              authors: pub.authors || "",
+              academicYear: pub.academicYear || "",
+              date: pub.date || ""
+            })) : defaultData.publications,
+          researchprojects: loadedData.researchprojects && loadedData.researchprojects.length > 0 ? 
+            loadedData.researchprojects.map(proj => ({
+              title: proj.title || "",
+              status: proj.status || "",
+              fundingagency: proj.fundingagency || "",
+              role: proj.role || "",
+              academicYear: proj.academicYear || "",
+              date: proj.date || ""
+            })) : defaultData.researchprojects,
+          doctoralStudentsGuided: loadedData.doctoralStudentsGuided && loadedData.doctoralStudentsGuided.length > 0 ? 
+            loadedData.doctoralStudentsGuided.map(student => ({
+              name: student.name || "",
+              status: student.status || "",
+              title: student.title || "",
+              organization: student.organization || "",
+              academicYear: student.academicYear || "",
+              date: student.date || ""
+            })) : defaultData.doctoralStudentsGuided,
+          booksChaptersPublished: loadedData.booksChaptersPublished && loadedData.booksChaptersPublished.length > 0 ? 
+            loadedData.booksChaptersPublished.map(book => ({
+              title: book.title || "",
+              author: book.author || "",
+              academicYear: book.academicYear || "",
+              date: book.date || "",
+              isbnId: book.isbnId || ""
+            })) : defaultData.booksChaptersPublished,
+          currentResponsibilities: loadedData.currentResponsibilities && loadedData.currentResponsibilities.length > 0 ? 
+            loadedData.currentResponsibilities.map(resp => {
+              // Handle both old string format and new object format
+              if (typeof resp === 'string') {
+                return { name: resp, academicYear: "", date: "" };
+              }
+              return {
+                name: resp.name || "",
+                academicYear: resp.academicYear || "",
+                date: resp.date || ""
+              };
+            }) : defaultData.currentResponsibilities,
+          otherResponsibilities: loadedData.otherResponsibilities && loadedData.otherResponsibilities.length > 0 ? 
+            loadedData.otherResponsibilities.map(resp => {
+              // Handle both old string format and new object format
+              if (typeof resp === 'string') {
+                return { name: resp, academicYear: "", date: "" };
+              }
+              return {
+                name: resp.name || "",
+                academicYear: resp.academicYear || "",
+                date: resp.date || ""
+              };
+            }) : defaultData.otherResponsibilities,
+          trainingProgramsAttended: loadedData.trainingProgramsAttended && loadedData.trainingProgramsAttended.length > 0 ? 
+            loadedData.trainingProgramsAttended.map(training => {
+              if (typeof training === 'string') {
+                return { name: training, academicYear: "", date: "" };
+              }
+              return {
+                name: training.name || "",
+                academicYear: training.academicYear || "",
+                date: training.date || ""
+              };
+            }) : defaultData.trainingProgramsAttended,
+          invitedSpeaker: loadedData.invitedSpeaker && loadedData.invitedSpeaker.length > 0 ? 
+            loadedData.invitedSpeaker.map(speaker => {
+              if (typeof speaker === 'string') {
+                return { name: speaker, academicYear: "", date: "" };
+              }
+              return {
+                name: speaker.name || "",
+                academicYear: speaker.academicYear || "",
+                date: speaker.date || ""
+              };
+            }) : defaultData.invitedSpeaker,
+          resourcePerson: loadedData.resourcePerson && loadedData.resourcePerson.length > 0 ? 
+            loadedData.resourcePerson.map(person => {
+              if (typeof person === 'string') {
+                return { name: person, academicYear: "", date: "" };
+              }
+              return {
+                name: person.name || "",
+                academicYear: person.academicYear || "",
+                date: person.date || ""
+              };
+            }) : defaultData.resourcePerson,
+          patents: loadedData.patents && loadedData.patents.length > 0 ? 
+            loadedData.patents.map(patent => ({
+              title: patent.title || "",
+              patentNo: patent.patentNo || "",
+              inventors: patent.inventors || "",
+              status: patent.status || "",
+              academicYear: patent.academicYear || "",
+              date: patent.date || ""
+            })) : defaultData.patents,
+          conferences: loadedData.conferences && loadedData.conferences.length > 0 ? 
+            loadedData.conferences.map(conference => ({
+              title: conference.title || "",
+              organization: conference.organization || "",
+              place: conference.place || "",
+              author: conference.author || "",
+              academicYear: conference.academicYear || "",
+              date: conference.date || ""
+            })) : defaultData.conferences,
+          expertCommittees: loadedData.expertCommittees && loadedData.expertCommittees.length > 0 ? 
+            loadedData.expertCommittees.map(committee => {
+              if (typeof committee === 'string') {
+                return { name: committee, academicYear: "", date: "" };
+              }
+              return {
+                name: committee.name || "",
+                academicYear: committee.academicYear || "",
+                date: committee.date || ""
+              };
+            }) : defaultData.expertCommittees,
+          programsOrganized: loadedData.programsOrganized && loadedData.programsOrganized.length > 0 ? 
+            loadedData.programsOrganized.map(program => {
+              if (typeof program === 'string') {
+                return { name: program, academicYear: "", date: "" };
+              }
+              return {
+                name: program.name || "",
+                academicYear: program.academicYear || "",
+                date: program.date || ""
+              };
+            }) : defaultData.programsOrganized,
+          positionsHeld: loadedData.positionsHeld && loadedData.positionsHeld.length > 0 ? 
+            loadedData.positionsHeld.map(position => {
+              if (typeof position === 'string') {
+                return { name: position, academicYear: "", date: "" };
+              }
+              return {
+                name: position.name || "",
+                academicYear: position.academicYear || "",
+                date: position.date || ""
+              };
+            }) : defaultData.positionsHeld,
+          specializedTrainings: loadedData.specializedTrainings && loadedData.specializedTrainings.length > 0 ? 
+            loadedData.specializedTrainings.map(training => {
+              if (typeof training === 'string') {
+                return { name: training, academicYear: "", date: "" };
+              }
+              return {
+                name: training.name || "",
+                academicYear: training.academicYear || "",
+                date: training.date || ""
+              };
+            }) : defaultData.specializedTrainings
         };
         
         setFacultyData(mergedData);
@@ -287,31 +479,31 @@ const FacultyEditPage: React.FC = () => {
         department: "",
         position: "",
         mailId: "",
+        phone: "",
         yearsOfExperience: "",
         areaOfInterest: "",
         address: "",
         aicteId: "",
         biography: "",
-        contact: { email: "", office: "", phone: "" },
-        education: [{ degree: "", field: "", institution: "" }],
-        employmenthistory: [{ organization: "", position: "", timeperiod: "" }],
-        memberships: [""],
-        awards: [{ organization: "", title: "", year: "" }],
-        publications: [{ type: "", year: "", title: "", subtitle: "", authors: "" }],
-        researchprojects: [{ title: "", status: "", fundingagency: "", duration: "", role: "" }],
-        doctoralStudentsGuided: [{ name: "", status: "", title: "", organization: "" }],
-        booksChaptersPublished: [{ title: "", author: "", year: "", isbnId: "" }],
-        currentResponsibilities: [""],
-        otherResponsibilities: [""],
-        trainingProgramsAttended: [""],
-        invitedSpeaker: [""],
-        resourcePerson: [""],
-        patents: [{ title: "", patentNo: "", year: "", inventors: "", status: "" }],
-        conferences: [{ title: "", organization: "", year: "", place: "", author: "" }],
-        expertCommittees: [""],
-        programsOrganized: [""],
-        positionsHeld: [""],
-        specializedTrainings: [""]
+        education: [{ degree: "", field: "", institution: "", academicYear: "", date: "" }],
+        employmenthistory: [{ organization: "", position: "", timeperiod: "", academicYear: "", date: "" }],
+        memberships: [{ name: "", academicYear: "", date: "" }],
+        awards: [{ organization: "", title: "", academicYear: "", date: "" }],
+        publications: [{ type: "", title: "", subtitle: "", authors: "", academicYear: "", date: "" }],
+        researchprojects: [{ title: "", status: "", fundingagency: "", role: "", academicYear: "", date: "" }],
+        doctoralStudentsGuided: [{ name: "", status: "", title: "", organization: "", academicYear: "", date: "" }],
+        booksChaptersPublished: [{ title: "", author: "", academicYear: "", date: "", isbnId: "" }],
+        currentResponsibilities: [{ name: "", academicYear: "", date: "" }],
+        otherResponsibilities: [{ name: "", academicYear: "", date: "" }],
+        trainingProgramsAttended: [{ name: "", academicYear: "", date: "" }],
+        invitedSpeaker: [{ name: "", academicYear: "", date: "" }],
+        resourcePerson: [{ name: "", academicYear: "", date: "" }],
+        patents: [{ title: "", patentNo: "", inventors: "", status: "", academicYear: "", date: "" }],
+        conferences: [{ title: "", organization: "", place: "", author: "", academicYear: "", date: "" }],
+        expertCommittees: [{ name: "", academicYear: "", date: "" }],
+        programsOrganized: [{ name: "", academicYear: "", date: "" }],
+        positionsHeld: [{ name: "", academicYear: "", date: "" }],
+        specializedTrainings: [{ name: "", academicYear: "", date: "" }]
       });
       setProfilePictureFile(null);
       setEmail("");
@@ -407,21 +599,23 @@ const FacultyEditPage: React.FC = () => {
               }
               return item !== '' && item !== null && item !== undefined;
             });
-            return [key, filteredArray];
+            return [key, filteredArray.length > 0 ? filteredArray : undefined];
           } else if (typeof value === 'string') {
             // Only include non-empty strings
-            return value.trim() !== '' ? [key, value] : [key, ''];
+            return [key, value.trim() !== '' ? value : undefined];
           }
           return [key, value];
         }).filter(([key, value]) => {
-          // Remove empty string values but keep other falsy values like 0 or false
-          return !(typeof value === 'string' && value === '');
+          // Remove undefined values (empty fields)
+          return value !== undefined;
         })
       );
       
       const docRef = doc(db, "faculty", user.email);
       await setDoc(docRef, cleanData);
-      setFacultyData(cleanData);
+      
+      // Update local state with the cleaned data
+      setFacultyData(updatedFacultyData); // Keep full data locally for form display
       alert("Data saved successfully!");
     } catch (error) {
       console.error("Error saving data:", error);
@@ -452,13 +646,6 @@ const FacultyEditPage: React.FC = () => {
       [field]: (prev[field] as any[]).map((item, i) => 
         i === index ? { ...item, [key]: value } : item
       )
-    }));
-  };
-
-  const updateMembership = (index: number, value: string) => {
-    setFacultyData(prev => ({
-      ...prev,
-      memberships: prev.memberships.map((item, i) => i === index ? value : item)
     }));
   };
 
@@ -655,6 +842,16 @@ const FacultyEditPage: React.FC = () => {
               />
             </div>
             <div>
+              <label style={{ display: 'block', marginBottom: 4, fontWeight: 500 }}>Phone</label>
+              <input
+                type="tel"
+                value={facultyData.phone}
+                onChange={e => setFacultyData(prev => ({ ...prev, phone: e.target.value }))}
+                style={{ width: '100%', padding: 8, border: '1px solid #888', borderRadius: 4 }}
+                placeholder="e.g., +91 9876543210"
+              />
+            </div>
+            <div>
               <label style={{ display: 'block', marginBottom: 4, fontWeight: 500 }}>Years of Experience</label>
               <input
                 type="text"
@@ -707,46 +904,12 @@ const FacultyEditPage: React.FC = () => {
           />
         </div>
 
-        {/* Contact Information */}
-        <div style={{ border: '1px solid #e5e7eb', borderRadius: 8, padding: 16 }}>
-          <h3>Contact Information</h3>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: 16 }}>
-            <div>
-              <label>Email</label>
-              <input
-                type="email"
-                value={facultyData.contact.email}
-                onChange={e => setFacultyData(prev => ({ ...prev, contact: { ...prev.contact, email: e.target.value } }))}
-                style={{ width: '100%', padding: 8, border: '1px solid #888', borderRadius: 4 }}
-              />
-            </div>
-            <div>
-              <label>Office</label>
-              <input
-                type="text"
-                value={facultyData.contact.office}
-                onChange={e => setFacultyData(prev => ({ ...prev, contact: { ...prev.contact, office: e.target.value } }))}
-                style={{ width: '100%', padding: 8, border: '1px solid #888', borderRadius: 4 }}
-              />
-            </div>
-            <div>
-              <label>Phone</label>
-              <input
-                type="text"
-                value={facultyData.contact.phone}
-                onChange={e => setFacultyData(prev => ({ ...prev, contact: { ...prev.contact, phone: e.target.value } }))}
-                style={{ width: '100%', padding: 8, border: '1px solid #888', borderRadius: 4 }}
-              />
-            </div>
-          </div>
-        </div>
-
         {/* Education */}
         <div style={{ border: '1px solid #e5e7eb', borderRadius: 8, padding: 16 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
             <h3>Education</h3>
             <button
-              onClick={() => addArrayItem('education', { degree: '', field: '', institution: '' })}
+              onClick={() => addArrayItem('education', { degree: '', field: '', institution: '', academicYear: '', date: '' })}
               style={{ padding: '8px 16px', background: '#10b981', color: '#fff', border: 'none', borderRadius: 4 }}
             >
               Add Education
@@ -775,6 +938,23 @@ const FacultyEditPage: React.FC = () => {
                 onChange={e => updateArrayItem('education', index, 'institution', e.target.value)}
                 style={{ padding: 8, border: '1px solid #888', borderRadius: 4 }}
               />
+              <select
+                value={edu.academicYear}
+                onChange={e => updateArrayItem('education', index, 'academicYear', e.target.value)}
+                style={{ padding: 8, border: '1px solid #888', borderRadius: 4 }}
+              >
+                <option value="">Select Academic Year</option>
+                {generateAcademicYearOptions().map(year => (
+                  <option key={year} value={year}>{year}</option>
+                ))}
+              </select>
+              <input
+                type="date"
+                placeholder="Date"
+                value={edu.date}
+                onChange={e => updateArrayItem('education', index, 'date', e.target.value)}
+                style={{ padding: 8, border: '1px solid #888', borderRadius: 4 }}
+              />
               <button
                 onClick={() => removeArrayItem('education', index)}
                 style={{ padding: '8px 16px', background: '#ef4444', color: '#fff', border: 'none', borderRadius: 4 }}
@@ -790,7 +970,7 @@ const FacultyEditPage: React.FC = () => {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
             <h3>Employment History</h3>
             <button
-              onClick={() => addArrayItem('employmenthistory', { organization: '', position: '', timeperiod: '' })}
+              onClick={() => addArrayItem('employmenthistory', { organization: '', position: '', timeperiod: '', academicYear: '', date: '' })}
               style={{ padding: '8px 16px', background: '#10b981', color: '#fff', border: 'none', borderRadius: 4 }}
             >
               Add Employment
@@ -819,6 +999,23 @@ const FacultyEditPage: React.FC = () => {
                 onChange={e => updateArrayItem('employmenthistory', index, 'timeperiod', e.target.value)}
                 style={{ padding: 8, border: '1px solid #888', borderRadius: 4 }}
               />
+              <select
+                value={emp.academicYear}
+                onChange={e => updateArrayItem('employmenthistory', index, 'academicYear', e.target.value)}
+                style={{ padding: 8, border: '1px solid #888', borderRadius: 4 }}
+              >
+                <option value="">Select Academic Year</option>
+                {generateAcademicYearOptions().map(year => (
+                  <option key={year} value={year}>{year}</option>
+                ))}
+              </select>
+              <input
+                type="date"
+                placeholder="Date"
+                value={emp.date}
+                onChange={e => updateArrayItem('employmenthistory', index, 'date', e.target.value)}
+                style={{ padding: 8, border: '1px solid #888', borderRadius: 4 }}
+              />
               <button
                 onClick={() => removeArrayItem('employmenthistory', index)}
                 style={{ padding: '8px 16px', background: '#ef4444', color: '#fff', border: 'none', borderRadius: 4 }}
@@ -834,23 +1031,40 @@ const FacultyEditPage: React.FC = () => {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
             <h3>Memberships</h3>
             <button
-              onClick={() => setFacultyData(prev => ({ ...prev, memberships: [...prev.memberships, ''] }))}
+              onClick={() => addArrayItem('memberships', { name: '', academicYear: '', date: '' })}
               style={{ padding: '8px 16px', background: '#10b981', color: '#fff', border: 'none', borderRadius: 4 }}
             >
               Add Membership
             </button>
           </div>
           {facultyData.memberships.map((membership, index) => (
-            <div key={index} style={{ display: 'flex', gap: 16, marginBottom: 16 }}>
+            <div key={index} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16, marginBottom: 16, padding: 16, border: '1px solid #d1d5db', borderRadius: 4 }}>
               <input
                 type="text"
-                placeholder="Membership"
-                value={membership}
-                onChange={e => updateMembership(index, e.target.value)}
-                style={{ flex: 1, padding: 8, border: '1px solid #888', borderRadius: 4 }}
+                placeholder="Membership Name"
+                value={membership.name}
+                onChange={e => updateArrayItem('memberships', index, 'name', e.target.value)}
+                style={{ padding: 8, border: '1px solid #888', borderRadius: 4 }}
+              />
+              <select
+                value={membership.academicYear}
+                onChange={e => updateArrayItem('memberships', index, 'academicYear', e.target.value)}
+                style={{ padding: 8, border: '1px solid #888', borderRadius: 4 }}
+              >
+                <option value="">Select Academic Year</option>
+                {generateAcademicYearOptions().map(year => (
+                  <option key={year} value={year}>{year}</option>
+                ))}
+              </select>
+              <input
+                type="date"
+                placeholder="Date"
+                value={membership.date}
+                onChange={e => updateArrayItem('memberships', index, 'date', e.target.value)}
+                style={{ padding: 8, border: '1px solid #888', borderRadius: 4 }}
               />
               <button
-                onClick={() => setFacultyData(prev => ({ ...prev, memberships: prev.memberships.filter((_, i) => i !== index) }))}
+                onClick={() => removeArrayItem('memberships', index)}
                 style={{ padding: '8px 16px', background: '#ef4444', color: '#fff', border: 'none', borderRadius: 4 }}
               >
                 Remove
@@ -864,7 +1078,7 @@ const FacultyEditPage: React.FC = () => {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
             <h3>Awards</h3>
             <button
-              onClick={() => addArrayItem('awards', { organization: '', title: '', year: '' })}
+              onClick={() => addArrayItem('awards', { organization: '', title: '', academicYear: '', date: '' })}
               style={{ padding: '8px 16px', background: '#10b981', color: '#fff', border: 'none', borderRadius: 4 }}
             >
               Add Award
@@ -887,15 +1101,22 @@ const FacultyEditPage: React.FC = () => {
                 style={{ padding: 8, border: '1px solid #888', borderRadius: 4 }}
               />
               <select
-                value={award.year}
-                onChange={e => updateArrayItem('awards', index, 'year', e.target.value)}
-                style={{ padding: 8, border: '1px solid #888', borderRadius: 4, background: '#fff' }}
+                value={award.academicYear}
+                onChange={e => updateArrayItem('awards', index, 'academicYear', e.target.value)}
+                style={{ padding: 8, border: '1px solid #888', borderRadius: 4 }}
               >
-                <option value="">Select Year</option>
-                {generateYearOptions().map(year => (
+                <option value="">Select Academic Year</option>
+                {generateAcademicYearOptions().map(year => (
                   <option key={year} value={year}>{year}</option>
                 ))}
               </select>
+              <input
+                type="date"
+                placeholder="Date"
+                value={award.date}
+                onChange={e => updateArrayItem('awards', index, 'date', e.target.value)}
+                style={{ padding: 8, border: '1px solid #888', borderRadius: 4 }}
+              />
               <button
                 onClick={() => removeArrayItem('awards', index)}
                 style={{ padding: '8px 16px', background: '#ef4444', color: '#fff', border: 'none', borderRadius: 4 }}
@@ -911,7 +1132,7 @@ const FacultyEditPage: React.FC = () => {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
             <h3>Publications</h3>
             <button
-              onClick={() => addArrayItem('publications', { type: '', year: '', title: '', subtitle: '', authors: '' })}
+              onClick={() => addArrayItem('publications', { type: '', title: '', subtitle: '', authors: '', academicYear: '', date: '' })}
               style={{ padding: '8px 16px', background: '#10b981', color: '#fff', border: 'none', borderRadius: 4 }}
             >
               Add Publication
@@ -926,16 +1147,6 @@ const FacultyEditPage: React.FC = () => {
                 onChange={e => updateArrayItem('publications', index, 'type', e.target.value)}
                 style={{ padding: 8, border: '1px solid #888', borderRadius: 4 }}
               />
-              <select
-                value={pub.year}
-                onChange={e => updateArrayItem('publications', index, 'year', e.target.value)}
-                style={{ padding: 8, border: '1px solid #888', borderRadius: 4, background: '#fff' }}
-              >
-                <option value="">Select Year</option>
-                {generateYearOptions().map(year => (
-                  <option key={year} value={year}>{year}</option>
-                ))}
-              </select>
               <input
                 type="text"
                 placeholder="Title"
@@ -957,6 +1168,23 @@ const FacultyEditPage: React.FC = () => {
                 onChange={e => updateArrayItem('publications', index, 'authors', e.target.value)}
                 style={{ padding: 8, border: '1px solid #888', borderRadius: 4 }}
               />
+              <select
+                value={pub.academicYear}
+                onChange={e => updateArrayItem('publications', index, 'academicYear', e.target.value)}
+                style={{ padding: 8, border: '1px solid #888', borderRadius: 4 }}
+              >
+                <option value="">Select Academic Year</option>
+                {generateAcademicYearOptions().map(year => (
+                  <option key={year} value={year}>{year}</option>
+                ))}
+              </select>
+              <input
+                type="date"
+                placeholder="Date"
+                value={pub.date}
+                onChange={e => updateArrayItem('publications', index, 'date', e.target.value)}
+                style={{ padding: 8, border: '1px solid #888', borderRadius: 4 }}
+              />
               <button
                 onClick={() => removeArrayItem('publications', index)}
                 style={{ padding: '8px 16px', background: '#ef4444', color: '#fff', border: 'none', borderRadius: 4 }}
@@ -972,7 +1200,7 @@ const FacultyEditPage: React.FC = () => {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
             <h3>Research Projects</h3>
             <button
-              onClick={() => addArrayItem('researchprojects', { title: '', status: '', fundingagency: '', duration: '', role: '' })}
+              onClick={() => addArrayItem('researchprojects', { title: '', status: '', fundingagency: '', role: '', academicYear: '', date: '' })}
               style={{ padding: '8px 16px', background: '#10b981', color: '#fff', border: 'none', borderRadius: 4 }}
             >
               Add Project
@@ -1003,16 +1231,26 @@ const FacultyEditPage: React.FC = () => {
               />
               <input
                 type="text"
-                placeholder="Duration"
-                value={project.duration}
-                onChange={e => updateArrayItem('researchprojects', index, 'duration', e.target.value)}
-                style={{ padding: 8, border: '1px solid #888', borderRadius: 4 }}
-              />
-              <input
-                type="text"
                 placeholder="Role"
                 value={project.role}
                 onChange={e => updateArrayItem('researchprojects', index, 'role', e.target.value)}
+                style={{ padding: 8, border: '1px solid #888', borderRadius: 4 }}
+              />
+              <select
+                value={project.academicYear}
+                onChange={e => updateArrayItem('researchprojects', index, 'academicYear', e.target.value)}
+                style={{ padding: 8, border: '1px solid #888', borderRadius: 4 }}
+              >
+                <option value="">Select Academic Year</option>
+                {generateAcademicYearOptions().map(year => (
+                  <option key={year} value={year}>{year}</option>
+                ))}
+              </select>
+              <input
+                type="date"
+                placeholder="Date"
+                value={project.date}
+                onChange={e => updateArrayItem('researchprojects', index, 'date', e.target.value)}
                 style={{ padding: 8, border: '1px solid #888', borderRadius: 4 }}
               />
               <button
@@ -1030,7 +1268,7 @@ const FacultyEditPage: React.FC = () => {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
             <h3>Doctoral Students Guided</h3>
             <button
-              onClick={() => addArrayItem('doctoralStudentsGuided', { name: '', status: '', title: '', organization: '' })}
+              onClick={() => addArrayItem('doctoralStudentsGuided', { name: '', status: '', title: '', organization: '', academicYear: '', date: '' })}
               style={{ padding: '8px 16px', background: '#10b981', color: '#fff', border: 'none', borderRadius: 4 }}
             >
               Add Student
@@ -1066,6 +1304,23 @@ const FacultyEditPage: React.FC = () => {
                 onChange={e => updateArrayItem('doctoralStudentsGuided', index, 'organization', e.target.value)}
                 style={{ padding: 8, border: '1px solid #888', borderRadius: 4 }}
               />
+              <select
+                value={student.academicYear}
+                onChange={e => updateArrayItem('doctoralStudentsGuided', index, 'academicYear', e.target.value)}
+                style={{ padding: 8, border: '1px solid #888', borderRadius: 4 }}
+              >
+                <option value="">Select Academic Year</option>
+                {generateAcademicYearOptions().map(year => (
+                  <option key={year} value={year}>{year}</option>
+                ))}
+              </select>
+              <input
+                type="date"
+                placeholder="Date"
+                value={student.date}
+                onChange={e => updateArrayItem('doctoralStudentsGuided', index, 'date', e.target.value)}
+                style={{ padding: 8, border: '1px solid #888', borderRadius: 4 }}
+              />
               <button
                 onClick={() => removeArrayItem('doctoralStudentsGuided', index)}
                 style={{ padding: '8px 16px', background: '#ef4444', color: '#fff', border: 'none', borderRadius: 4 }}
@@ -1081,7 +1336,7 @@ const FacultyEditPage: React.FC = () => {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
             <h3>Books / Chapters Published</h3>
             <button
-              onClick={() => addArrayItem('booksChaptersPublished', { title: '', author: '', year: '', isbnId: '' })}
+              onClick={() => addArrayItem('booksChaptersPublished', { title: '', author: '', academicYear: '', date: '', isbnId: '' })}
               style={{ padding: '8px 16px', background: '#10b981', color: '#fff', border: 'none', borderRadius: 4 }}
             >
               Add Book/Chapter
@@ -1103,21 +1358,28 @@ const FacultyEditPage: React.FC = () => {
                 onChange={e => updateArrayItem('booksChaptersPublished', index, 'author', e.target.value)}
                 style={{ padding: 8, border: '1px solid #888', borderRadius: 4 }}
               />
-              <select
-                value={book.year}
-                onChange={e => updateArrayItem('booksChaptersPublished', index, 'year', e.target.value)}
-                style={{ padding: 8, border: '1px solid #888', borderRadius: 4, background: '#fff' }}
-              >
-                <option value="">Select Year</option>
-                {generateYearOptions().map(year => (
-                  <option key={year} value={year}>{year}</option>
-                ))}
-              </select>
               <input
                 type="text"
                 placeholder="ISBN ID"
                 value={book.isbnId}
                 onChange={e => updateArrayItem('booksChaptersPublished', index, 'isbnId', e.target.value)}
+                style={{ padding: 8, border: '1px solid #888', borderRadius: 4 }}
+              />
+              <select
+                value={book.academicYear}
+                onChange={e => updateArrayItem('booksChaptersPublished', index, 'academicYear', e.target.value)}
+                style={{ padding: 8, border: '1px solid #888', borderRadius: 4 }}
+              >
+                <option value="">Select Academic Year</option>
+                {generateAcademicYearOptions().map(year => (
+                  <option key={year} value={year}>{year}</option>
+                ))}
+              </select>
+              <input
+                type="date"
+                placeholder="Date"
+                value={book.date}
+                onChange={e => updateArrayItem('booksChaptersPublished', index, 'date', e.target.value)}
                 style={{ padding: 8, border: '1px solid #888', borderRadius: 4 }}
               />
               <button
@@ -1135,27 +1397,40 @@ const FacultyEditPage: React.FC = () => {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
             <h3>Current Responsibilities</h3>
             <button
-              onClick={() => setFacultyData(prev => ({ ...prev, currentResponsibilities: [...prev.currentResponsibilities, ''] }))}
+              onClick={() => addArrayItem('currentResponsibilities', { name: '', academicYear: '', date: '' })}
               style={{ padding: '8px 16px', background: '#10b981', color: '#fff', border: 'none', borderRadius: 4 }}
             >
               Add Responsibility
             </button>
           </div>
           {facultyData.currentResponsibilities.map((responsibility, index) => (
-            <div key={index} style={{ display: 'flex', gap: 16, marginBottom: 16 }}>
+            <div key={index} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16, marginBottom: 16, padding: 16, border: '1px solid #d1d5db', borderRadius: 4 }}>
               <input
                 type="text"
-                placeholder="Current Responsibility"
-                value={responsibility}
-                onChange={e => {
-                  const newResponsibilities = [...facultyData.currentResponsibilities];
-                  newResponsibilities[index] = e.target.value;
-                  setFacultyData(prev => ({ ...prev, currentResponsibilities: newResponsibilities }));
-                }}
-                style={{ flex: 1, padding: 8, border: '1px solid #888', borderRadius: 4 }}
+                placeholder="Responsibility Name"
+                value={responsibility.name}
+                onChange={e => updateArrayItem('currentResponsibilities', index, 'name', e.target.value)}
+                style={{ padding: 8, border: '1px solid #888', borderRadius: 4 }}
+              />
+              <select
+                value={responsibility.academicYear}
+                onChange={e => updateArrayItem('currentResponsibilities', index, 'academicYear', e.target.value)}
+                style={{ padding: 8, border: '1px solid #888', borderRadius: 4 }}
+              >
+                <option value="">Select Academic Year</option>
+                {generateAcademicYearOptions().map(year => (
+                  <option key={year} value={year}>{year}</option>
+                ))}
+              </select>
+              <input
+                type="date"
+                placeholder="Date"
+                value={responsibility.date}
+                onChange={e => updateArrayItem('currentResponsibilities', index, 'date', e.target.value)}
+                style={{ padding: 8, border: '1px solid #888', borderRadius: 4 }}
               />
               <button
-                onClick={() => setFacultyData(prev => ({ ...prev, currentResponsibilities: prev.currentResponsibilities.filter((_, i) => i !== index) }))}
+                onClick={() => removeArrayItem('currentResponsibilities', index)}
                 style={{ padding: '8px 16px', background: '#ef4444', color: '#fff', border: 'none', borderRadius: 4 }}
               >
                 Remove
@@ -1169,27 +1444,40 @@ const FacultyEditPage: React.FC = () => {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
             <h3>Other Responsibilities</h3>
             <button
-              onClick={() => setFacultyData(prev => ({ ...prev, otherResponsibilities: [...prev.otherResponsibilities, ''] }))}
+              onClick={() => addArrayItem('otherResponsibilities', { name: '', academicYear: '', date: '' })}
               style={{ padding: '8px 16px', background: '#10b981', color: '#fff', border: 'none', borderRadius: 4 }}
             >
               Add Responsibility
             </button>
           </div>
           {facultyData.otherResponsibilities.map((responsibility, index) => (
-            <div key={index} style={{ display: 'flex', gap: 16, marginBottom: 16 }}>
+            <div key={index} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16, marginBottom: 16, padding: 16, border: '1px solid #d1d5db', borderRadius: 4 }}>
               <input
                 type="text"
-                placeholder="Other Responsibility"
-                value={responsibility}
-                onChange={e => {
-                  const newResponsibilities = [...facultyData.otherResponsibilities];
-                  newResponsibilities[index] = e.target.value;
-                  setFacultyData(prev => ({ ...prev, otherResponsibilities: newResponsibilities }));
-                }}
-                style={{ flex: 1, padding: 8, border: '1px solid #888', borderRadius: 4 }}
+                placeholder="Responsibility Name"
+                value={responsibility.name}
+                onChange={e => updateArrayItem('otherResponsibilities', index, 'name', e.target.value)}
+                style={{ padding: 8, border: '1px solid #888', borderRadius: 4 }}
+              />
+              <select
+                value={responsibility.academicYear}
+                onChange={e => updateArrayItem('otherResponsibilities', index, 'academicYear', e.target.value)}
+                style={{ padding: 8, border: '1px solid #888', borderRadius: 4 }}
+              >
+                <option value="">Select Academic Year</option>
+                {generateAcademicYearOptions().map(year => (
+                  <option key={year} value={year}>{year}</option>
+                ))}
+              </select>
+              <input
+                type="date"
+                placeholder="Date"
+                value={responsibility.date}
+                onChange={e => updateArrayItem('otherResponsibilities', index, 'date', e.target.value)}
+                style={{ padding: 8, border: '1px solid #888', borderRadius: 4 }}
               />
               <button
-                onClick={() => setFacultyData(prev => ({ ...prev, otherResponsibilities: prev.otherResponsibilities.filter((_, i) => i !== index) }))}
+                onClick={() => removeArrayItem('otherResponsibilities', index)}
                 style={{ padding: '8px 16px', background: '#ef4444', color: '#fff', border: 'none', borderRadius: 4 }}
               >
                 Remove
@@ -1203,27 +1491,40 @@ const FacultyEditPage: React.FC = () => {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
             <h3>Training Programs Attended</h3>
             <button
-              onClick={() => setFacultyData(prev => ({ ...prev, trainingProgramsAttended: [...prev.trainingProgramsAttended, ''] }))}
+              onClick={() => addArrayItem('trainingProgramsAttended', { name: '', academicYear: '', date: '' })}
               style={{ padding: '8px 16px', background: '#10b981', color: '#fff', border: 'none', borderRadius: 4 }}
             >
               Add Training
             </button>
           </div>
           {facultyData.trainingProgramsAttended.map((training, index) => (
-            <div key={index} style={{ display: 'flex', gap: 16, marginBottom: 16 }}>
+            <div key={index} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16, marginBottom: 16, padding: 16, border: '1px solid #d1d5db', borderRadius: 4 }}>
               <input
                 type="text"
-                placeholder="Training Program"
-                value={training}
-                onChange={e => {
-                  const newTrainings = [...facultyData.trainingProgramsAttended];
-                  newTrainings[index] = e.target.value;
-                  setFacultyData(prev => ({ ...prev, trainingProgramsAttended: newTrainings }));
-                }}
-                style={{ flex: 1, padding: 8, border: '1px solid #888', borderRadius: 4 }}
+                placeholder="Training Program Name"
+                value={training.name}
+                onChange={e => updateArrayItem('trainingProgramsAttended', index, 'name', e.target.value)}
+                style={{ padding: 8, border: '1px solid #888', borderRadius: 4 }}
+              />
+              <select
+                value={training.academicYear}
+                onChange={e => updateArrayItem('trainingProgramsAttended', index, 'academicYear', e.target.value)}
+                style={{ padding: 8, border: '1px solid #888', borderRadius: 4 }}
+              >
+                <option value="">Select Academic Year</option>
+                {generateAcademicYearOptions().map(year => (
+                  <option key={year} value={year}>{year}</option>
+                ))}
+              </select>
+              <input
+                type="date"
+                placeholder="Date"
+                value={training.date}
+                onChange={e => updateArrayItem('trainingProgramsAttended', index, 'date', e.target.value)}
+                style={{ padding: 8, border: '1px solid #888', borderRadius: 4 }}
               />
               <button
-                onClick={() => setFacultyData(prev => ({ ...prev, trainingProgramsAttended: prev.trainingProgramsAttended.filter((_, i) => i !== index) }))}
+                onClick={() => removeArrayItem('trainingProgramsAttended', index)}
                 style={{ padding: '8px 16px', background: '#ef4444', color: '#fff', border: 'none', borderRadius: 4 }}
               >
                 Remove
@@ -1237,27 +1538,40 @@ const FacultyEditPage: React.FC = () => {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
             <h3>Invited Speaker</h3>
             <button
-              onClick={() => setFacultyData(prev => ({ ...prev, invitedSpeaker: [...prev.invitedSpeaker, ''] }))}
+              onClick={() => addArrayItem('invitedSpeaker', { name: '', academicYear: '', date: '' })}
               style={{ padding: '8px 16px', background: '#10b981', color: '#fff', border: 'none', borderRadius: 4 }}
             >
               Add Event
             </button>
           </div>
           {facultyData.invitedSpeaker.map((event, index) => (
-            <div key={index} style={{ display: 'flex', gap: 16, marginBottom: 16 }}>
+            <div key={index} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16, marginBottom: 16, padding: 16, border: '1px solid #d1d5db', borderRadius: 4 }}>
               <input
                 type="text"
-                placeholder="Event/Conference where invited as speaker"
-                value={event}
-                onChange={e => {
-                  const newEvents = [...facultyData.invitedSpeaker];
-                  newEvents[index] = e.target.value;
-                  setFacultyData(prev => ({ ...prev, invitedSpeaker: newEvents }));
-                }}
-                style={{ flex: 1, padding: 8, border: '1px solid #888', borderRadius: 4 }}
+                placeholder="Event/Conference Name"
+                value={event.name}
+                onChange={e => updateArrayItem('invitedSpeaker', index, 'name', e.target.value)}
+                style={{ padding: 8, border: '1px solid #888', borderRadius: 4 }}
+              />
+              <select
+                value={event.academicYear}
+                onChange={e => updateArrayItem('invitedSpeaker', index, 'academicYear', e.target.value)}
+                style={{ padding: 8, border: '1px solid #888', borderRadius: 4 }}
+              >
+                <option value="">Select Academic Year</option>
+                {generateAcademicYearOptions().map(year => (
+                  <option key={year} value={year}>{year}</option>
+                ))}
+              </select>
+              <input
+                type="date"
+                placeholder="Date"
+                value={event.date}
+                onChange={e => updateArrayItem('invitedSpeaker', index, 'date', e.target.value)}
+                style={{ padding: 8, border: '1px solid #888', borderRadius: 4 }}
               />
               <button
-                onClick={() => setFacultyData(prev => ({ ...prev, invitedSpeaker: prev.invitedSpeaker.filter((_, i) => i !== index) }))}
+                onClick={() => removeArrayItem('invitedSpeaker', index)}
                 style={{ padding: '8px 16px', background: '#ef4444', color: '#fff', border: 'none', borderRadius: 4 }}
               >
                 Remove
@@ -1271,27 +1585,40 @@ const FacultyEditPage: React.FC = () => {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
             <h3>Resource Person</h3>
             <button
-              onClick={() => setFacultyData(prev => ({ ...prev, resourcePerson: [...prev.resourcePerson, ''] }))}
+              onClick={() => addArrayItem('resourcePerson', { name: '', academicYear: '', date: '' })}
               style={{ padding: '8px 16px', background: '#10b981', color: '#fff', border: 'none', borderRadius: 4 }}
             >
               Add Event
             </button>
           </div>
           {facultyData.resourcePerson.map((event, index) => (
-            <div key={index} style={{ display: 'flex', gap: 16, marginBottom: 16 }}>
+            <div key={index} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16, marginBottom: 16, padding: 16, border: '1px solid #d1d5db', borderRadius: 4 }}>
               <input
                 type="text"
-                placeholder="Event/Program where served as resource person"
-                value={event}
-                onChange={e => {
-                  const newEvents = [...facultyData.resourcePerson];
-                  newEvents[index] = e.target.value;
-                  setFacultyData(prev => ({ ...prev, resourcePerson: newEvents }));
-                }}
-                style={{ flex: 1, padding: 8, border: '1px solid #888', borderRadius: 4 }}
+                placeholder="Event/Program Name"
+                value={event.name}
+                onChange={e => updateArrayItem('resourcePerson', index, 'name', e.target.value)}
+                style={{ padding: 8, border: '1px solid #888', borderRadius: 4 }}
+              />
+              <select
+                value={event.academicYear}
+                onChange={e => updateArrayItem('resourcePerson', index, 'academicYear', e.target.value)}
+                style={{ padding: 8, border: '1px solid #888', borderRadius: 4 }}
+              >
+                <option value="">Select Academic Year</option>
+                {generateAcademicYearOptions().map(year => (
+                  <option key={year} value={year}>{year}</option>
+                ))}
+              </select>
+              <input
+                type="date"
+                placeholder="Date"
+                value={event.date}
+                onChange={e => updateArrayItem('resourcePerson', index, 'date', e.target.value)}
+                style={{ padding: 8, border: '1px solid #888', borderRadius: 4 }}
               />
               <button
-                onClick={() => setFacultyData(prev => ({ ...prev, resourcePerson: prev.resourcePerson.filter((_, i) => i !== index) }))}
+                onClick={() => removeArrayItem('resourcePerson', index)}
                 style={{ padding: '8px 16px', background: '#ef4444', color: '#fff', border: 'none', borderRadius: 4 }}
               >
                 Remove
@@ -1305,7 +1632,7 @@ const FacultyEditPage: React.FC = () => {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
             <h3>Patents</h3>
             <button
-              onClick={() => addArrayItem('patents', { title: '', patentNo: '', year: '', inventors: '', status: '' })}
+              onClick={() => addArrayItem('patents', { title: '', patentNo: '', inventors: '', status: '', academicYear: '', date: '' })}
               style={{ padding: '8px 16px', background: '#10b981', color: '#fff', border: 'none', borderRadius: 4 }}
             >
               Add Patent
@@ -1327,16 +1654,6 @@ const FacultyEditPage: React.FC = () => {
                 onChange={e => updateArrayItem('patents', index, 'patentNo', e.target.value)}
                 style={{ padding: 8, border: '1px solid #888', borderRadius: 4 }}
               />
-              <select
-                value={patent.year}
-                onChange={e => updateArrayItem('patents', index, 'year', e.target.value)}
-                style={{ padding: 8, border: '1px solid #888', borderRadius: 4, background: '#fff' }}
-              >
-                <option value="">Select Year</option>
-                {generateYearOptions().map(year => (
-                  <option key={year} value={year}>{year}</option>
-                ))}
-              </select>
               <input
                 type="text"
                 placeholder="Inventors"
@@ -1349,6 +1666,23 @@ const FacultyEditPage: React.FC = () => {
                 placeholder="Status"
                 value={patent.status}
                 onChange={e => updateArrayItem('patents', index, 'status', e.target.value)}
+                style={{ padding: 8, border: '1px solid #888', borderRadius: 4 }}
+              />
+              <select
+                value={patent.academicYear}
+                onChange={e => updateArrayItem('patents', index, 'academicYear', e.target.value)}
+                style={{ padding: 8, border: '1px solid #888', borderRadius: 4 }}
+              >
+                <option value="">Select Academic Year</option>
+                {generateAcademicYearOptions().map(year => (
+                  <option key={year} value={year}>{year}</option>
+                ))}
+              </select>
+              <input
+                type="date"
+                placeholder="Date"
+                value={patent.date}
+                onChange={e => updateArrayItem('patents', index, 'date', e.target.value)}
                 style={{ padding: 8, border: '1px solid #888', borderRadius: 4 }}
               />
               <button
@@ -1366,7 +1700,7 @@ const FacultyEditPage: React.FC = () => {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
             <h3>Conferences</h3>
             <button
-              onClick={() => addArrayItem('conferences', { title: '', organization: '', year: '', place: '', author: '' })}
+              onClick={() => addArrayItem('conferences', { title: '', organization: '', place: '', author: '', academicYear: '', date: '' })}
               style={{ padding: '8px 16px', background: '#10b981', color: '#fff', border: 'none', borderRadius: 4 }}
             >
               Add Conference
@@ -1388,16 +1722,6 @@ const FacultyEditPage: React.FC = () => {
                 onChange={e => updateArrayItem('conferences', index, 'organization', e.target.value)}
                 style={{ padding: 8, border: '1px solid #888', borderRadius: 4 }}
               />
-              <select
-                value={conference.year}
-                onChange={e => updateArrayItem('conferences', index, 'year', e.target.value)}
-                style={{ padding: 8, border: '1px solid #888', borderRadius: 4, background: '#fff' }}
-              >
-                <option value="">Select Year</option>
-                {generateYearOptions().map(year => (
-                  <option key={year} value={year}>{year}</option>
-                ))}
-              </select>
               <input
                 type="text"
                 placeholder="Place"
@@ -1410,6 +1734,23 @@ const FacultyEditPage: React.FC = () => {
                 placeholder="Author"
                 value={conference.author}
                 onChange={e => updateArrayItem('conferences', index, 'author', e.target.value)}
+                style={{ padding: 8, border: '1px solid #888', borderRadius: 4 }}
+              />
+              <select
+                value={conference.academicYear}
+                onChange={e => updateArrayItem('conferences', index, 'academicYear', e.target.value)}
+                style={{ padding: 8, border: '1px solid #888', borderRadius: 4 }}
+              >
+                <option value="">Select Academic Year</option>
+                {generateAcademicYearOptions().map(year => (
+                  <option key={year} value={year}>{year}</option>
+                ))}
+              </select>
+              <input
+                type="date"
+                placeholder="Date"
+                value={conference.date}
+                onChange={e => updateArrayItem('conferences', index, 'date', e.target.value)}
                 style={{ padding: 8, border: '1px solid #888', borderRadius: 4 }}
               />
               <button
@@ -1427,27 +1768,40 @@ const FacultyEditPage: React.FC = () => {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
             <h3>Expert Committees</h3>
             <button
-              onClick={() => setFacultyData(prev => ({ ...prev, expertCommittees: [...prev.expertCommittees, ''] }))}
+              onClick={() => addArrayItem('expertCommittees', { name: '', academicYear: '', date: '' })}
               style={{ padding: '8px 16px', background: '#10b981', color: '#fff', border: 'none', borderRadius: 4 }}
             >
               Add Committee
             </button>
           </div>
           {facultyData.expertCommittees.map((committee, index) => (
-            <div key={index} style={{ display: 'flex', gap: 16, marginBottom: 16 }}>
+            <div key={index} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16, marginBottom: 16, padding: 16, border: '1px solid #d1d5db', borderRadius: 4 }}>
               <input
                 type="text"
-                placeholder="Expert Committee"
-                value={committee}
-                onChange={e => {
-                  const newCommittees = [...facultyData.expertCommittees];
-                  newCommittees[index] = e.target.value;
-                  setFacultyData(prev => ({ ...prev, expertCommittees: newCommittees }));
-                }}
-                style={{ flex: 1, padding: 8, border: '1px solid #888', borderRadius: 4 }}
+                placeholder="Committee Name"
+                value={committee.name}
+                onChange={e => updateArrayItem('expertCommittees', index, 'name', e.target.value)}
+                style={{ padding: 8, border: '1px solid #888', borderRadius: 4 }}
+              />
+              <select
+                value={committee.academicYear}
+                onChange={e => updateArrayItem('expertCommittees', index, 'academicYear', e.target.value)}
+                style={{ padding: 8, border: '1px solid #888', borderRadius: 4 }}
+              >
+                <option value="">Select Academic Year</option>
+                {generateAcademicYearOptions().map(year => (
+                  <option key={year} value={year}>{year}</option>
+                ))}
+              </select>
+              <input
+                type="date"
+                placeholder="Date"
+                value={committee.date}
+                onChange={e => updateArrayItem('expertCommittees', index, 'date', e.target.value)}
+                style={{ padding: 8, border: '1px solid #888', borderRadius: 4 }}
               />
               <button
-                onClick={() => setFacultyData(prev => ({ ...prev, expertCommittees: prev.expertCommittees.filter((_, i) => i !== index) }))}
+                onClick={() => removeArrayItem('expertCommittees', index)}
                 style={{ padding: '8px 16px', background: '#ef4444', color: '#fff', border: 'none', borderRadius: 4 }}
               >
                 Remove
@@ -1461,27 +1815,40 @@ const FacultyEditPage: React.FC = () => {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
             <h3>Programs Organized</h3>
             <button
-              onClick={() => setFacultyData(prev => ({ ...prev, programsOrganized: [...prev.programsOrganized, ''] }))}
+              onClick={() => addArrayItem('programsOrganized', { name: '', academicYear: '', date: '' })}
               style={{ padding: '8px 16px', background: '#10b981', color: '#fff', border: 'none', borderRadius: 4 }}
             >
               Add Program
             </button>
           </div>
           {facultyData.programsOrganized.map((program, index) => (
-            <div key={index} style={{ display: 'flex', gap: 16, marginBottom: 16 }}>
+            <div key={index} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16, marginBottom: 16, padding: 16, border: '1px solid #d1d5db', borderRadius: 4 }}>
               <input
                 type="text"
-                placeholder="Program Organized"
-                value={program}
-                onChange={e => {
-                  const newPrograms = [...facultyData.programsOrganized];
-                  newPrograms[index] = e.target.value;
-                  setFacultyData(prev => ({ ...prev, programsOrganized: newPrograms }));
-                }}
-                style={{ flex: 1, padding: 8, border: '1px solid #888', borderRadius: 4 }}
+                placeholder="Program Name"
+                value={program.name}
+                onChange={e => updateArrayItem('programsOrganized', index, 'name', e.target.value)}
+                style={{ padding: 8, border: '1px solid #888', borderRadius: 4 }}
+              />
+              <select
+                value={program.academicYear}
+                onChange={e => updateArrayItem('programsOrganized', index, 'academicYear', e.target.value)}
+                style={{ padding: 8, border: '1px solid #888', borderRadius: 4 }}
+              >
+                <option value="">Select Academic Year</option>
+                {generateAcademicYearOptions().map(year => (
+                  <option key={year} value={year}>{year}</option>
+                ))}
+              </select>
+              <input
+                type="date"
+                placeholder="Date"
+                value={program.date}
+                onChange={e => updateArrayItem('programsOrganized', index, 'date', e.target.value)}
+                style={{ padding: 8, border: '1px solid #888', borderRadius: 4 }}
               />
               <button
-                onClick={() => setFacultyData(prev => ({ ...prev, programsOrganized: prev.programsOrganized.filter((_, i) => i !== index) }))}
+                onClick={() => removeArrayItem('programsOrganized', index)}
                 style={{ padding: '8px 16px', background: '#ef4444', color: '#fff', border: 'none', borderRadius: 4 }}
               >
                 Remove
@@ -1495,27 +1862,40 @@ const FacultyEditPage: React.FC = () => {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
             <h3>Positions Held</h3>
             <button
-              onClick={() => setFacultyData(prev => ({ ...prev, positionsHeld: [...prev.positionsHeld, ''] }))}
+              onClick={() => addArrayItem('positionsHeld', { name: '', academicYear: '', date: '' })}
               style={{ padding: '8px 16px', background: '#10b981', color: '#fff', border: 'none', borderRadius: 4 }}
             >
               Add Position
             </button>
           </div>
           {facultyData.positionsHeld.map((position, index) => (
-            <div key={index} style={{ display: 'flex', gap: 16, marginBottom: 16 }}>
+            <div key={index} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16, marginBottom: 16, padding: 16, border: '1px solid #d1d5db', borderRadius: 4 }}>
               <input
                 type="text"
-                placeholder="Position Held"
-                value={position}
-                onChange={e => {
-                  const newPositions = [...facultyData.positionsHeld];
-                  newPositions[index] = e.target.value;
-                  setFacultyData(prev => ({ ...prev, positionsHeld: newPositions }));
-                }}
-                style={{ flex: 1, padding: 8, border: '1px solid #888', borderRadius: 4 }}
+                placeholder="Position Name"
+                value={position.name}
+                onChange={e => updateArrayItem('positionsHeld', index, 'name', e.target.value)}
+                style={{ padding: 8, border: '1px solid #888', borderRadius: 4 }}
+              />
+              <select
+                value={position.academicYear}
+                onChange={e => updateArrayItem('positionsHeld', index, 'academicYear', e.target.value)}
+                style={{ padding: 8, border: '1px solid #888', borderRadius: 4 }}
+              >
+                <option value="">Select Academic Year</option>
+                {generateAcademicYearOptions().map(year => (
+                  <option key={year} value={year}>{year}</option>
+                ))}
+              </select>
+              <input
+                type="date"
+                placeholder="Date"
+                value={position.date}
+                onChange={e => updateArrayItem('positionsHeld', index, 'date', e.target.value)}
+                style={{ padding: 8, border: '1px solid #888', borderRadius: 4 }}
               />
               <button
-                onClick={() => setFacultyData(prev => ({ ...prev, positionsHeld: prev.positionsHeld.filter((_, i) => i !== index) }))}
+                onClick={() => removeArrayItem('positionsHeld', index)}
                 style={{ padding: '8px 16px', background: '#ef4444', color: '#fff', border: 'none', borderRadius: 4 }}
               >
                 Remove
@@ -1529,27 +1909,40 @@ const FacultyEditPage: React.FC = () => {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
             <h3>Specialized Trainings</h3>
             <button
-              onClick={() => setFacultyData(prev => ({ ...prev, specializedTrainings: [...prev.specializedTrainings, ''] }))}
+              onClick={() => addArrayItem('specializedTrainings', { name: '', academicYear: '', date: '' })}
               style={{ padding: '8px 16px', background: '#10b981', color: '#fff', border: 'none', borderRadius: 4 }}
             >
               Add Training
             </button>
           </div>
           {facultyData.specializedTrainings.map((training, index) => (
-            <div key={index} style={{ display: 'flex', gap: 16, marginBottom: 16 }}>
+            <div key={index} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16, marginBottom: 16, padding: 16, border: '1px solid #d1d5db', borderRadius: 4 }}>
               <input
                 type="text"
-                placeholder="Specialized Training"
-                value={training}
-                onChange={e => {
-                  const newTrainings = [...facultyData.specializedTrainings];
-                  newTrainings[index] = e.target.value;
-                  setFacultyData(prev => ({ ...prev, specializedTrainings: newTrainings }));
-                }}
-                style={{ flex: 1, padding: 8, border: '1px solid #888', borderRadius: 4 }}
+                placeholder="Training Name"
+                value={training.name}
+                onChange={e => updateArrayItem('specializedTrainings', index, 'name', e.target.value)}
+                style={{ padding: 8, border: '1px solid #888', borderRadius: 4 }}
+              />
+              <select
+                value={training.academicYear}
+                onChange={e => updateArrayItem('specializedTrainings', index, 'academicYear', e.target.value)}
+                style={{ padding: 8, border: '1px solid #888', borderRadius: 4 }}
+              >
+                <option value="">Select Academic Year</option>
+                {generateAcademicYearOptions().map(year => (
+                  <option key={year} value={year}>{year}</option>
+                ))}
+              </select>
+              <input
+                type="date"
+                placeholder="Date"
+                value={training.date}
+                onChange={e => updateArrayItem('specializedTrainings', index, 'date', e.target.value)}
+                style={{ padding: 8, border: '1px solid #888', borderRadius: 4 }}
               />
               <button
-                onClick={() => setFacultyData(prev => ({ ...prev, specializedTrainings: prev.specializedTrainings.filter((_, i) => i !== index) }))}
+                onClick={() => removeArrayItem('specializedTrainings', index)}
                 style={{ padding: '8px 16px', background: '#ef4444', color: '#fff', border: 'none', borderRadius: 4 }}
               >
                 Remove
