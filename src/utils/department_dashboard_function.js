@@ -1967,3 +1967,47 @@ export async function deleteCertification(departmentId, certId) {
   const docRef = doc(db, "department", departmentId, "activities", "main", "certifications", certId);
   await deleteDoc(docRef);
 }
+
+/**
+ * Fetch all MoUs for the department.
+ */
+export async function fetchMous(departmentId) {
+  const colRef = collection(db, "department", departmentId, "achievements", "main", "mou");
+  const snap = await getDocs(colRef);
+  return snap.docs.map(docSnap => ({
+    id: docSnap.id,
+    title: docSnap.data().title || "",
+    description: docSnap.data().description || "",
+    date: docSnap.data().date || "",
+    focus: docSnap.data().focus || "",
+    scope: docSnap.data().scope || "",
+    benefits: docSnap.data().benefits || "",
+    pdfUrl: docSnap.data().pdfUrl || ""
+  }));
+}
+
+/**
+ * Add a MoU (optional PDF upload).
+ */
+export async function addMou(departmentId, { title, description, date, focus, scope, benefits, pdfFile }) {
+  let pdfUrl = "";
+  if (pdfFile) {
+    const safeTitle = title.trim().replace(/[^a-z0-9]+/gi, "-").toLowerCase();
+    const filename = `${safeTitle}-${Date.now()}.pdf`;
+    const path = `${departmentId}/achievements/mou/${filename}`;
+    const storageRef = ref(storage, path);
+    const uploadTask = uploadBytesResumable(storageRef, pdfFile);
+    await uploadTask;
+    pdfUrl = await getDownloadURL(uploadTask.snapshot.ref);
+  }
+  const colRef = collection(db, "department", departmentId, "achievements", "main", "mou");
+  await addDoc(colRef, { title, description, date, focus, scope, benefits, pdfUrl });
+}
+
+/**
+ * Delete MoU by doc id.
+ */
+export async function deleteMou(departmentId, mouId) {
+  const docRef = doc(db, "department", departmentId, "achievements", "main", "mou", mouId);
+  await deleteDoc(docRef);
+}
