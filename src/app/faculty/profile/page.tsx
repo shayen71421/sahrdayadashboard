@@ -9,8 +9,6 @@ interface Education {
   degree: string;
   field: string;
   institution: string;
-  academicYear: string;
-  date: string;
 }
 
 interface EmploymentHistory {
@@ -401,13 +399,11 @@ const FacultyProfilePage: React.FC = () => {
             <div style={{ border: '1px solid #e5e7eb', borderRadius: 8, padding: 16 }}>
               <h3>Education</h3>
               {facultyData.education.map((edu, index) => (
-                (edu.degree || edu.field || edu.institution || edu.academicYear || edu.date) && (
+                (edu.degree || edu.field || edu.institution) && (
                   <div key={index} style={{ marginBottom: 16, padding: 16, border: '1px solid #d1d5db', borderRadius: 4 }}>
                     {edu.degree && <div><strong>Degree:</strong> {edu.degree}</div>}
                     {edu.field && <div><strong>Field:</strong> {edu.field}</div>}
                     {edu.institution && <div><strong>Institution:</strong> {edu.institution}</div>}
-                    {edu.academicYear && <div><strong>Academic Year:</strong> {edu.academicYear}</div>}
-                    {edu.date && <div><strong>Date:</strong> {new Date(edu.date).toLocaleDateString()}</div>}
                   </div>
                 )
               ))}
