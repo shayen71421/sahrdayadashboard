@@ -809,6 +809,8 @@ const FacultyEditPage: React.FC = () => {
                 <option value="Civil Engineering">Civil Engineering</option>
                 <option value="Biomedical Engineering">Biomedical Engineering</option>
                 <option value="Biotechnology Engineering">Biotechnology Engineering</option>
+                <option value="Biotechnology Engineering">Appield Science And humanities</option>
+
               </select>
             </div>
             <div>
